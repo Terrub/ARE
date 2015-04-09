@@ -8,39 +8,13 @@
 
 --------------------------------------------------------------*/
 
-core = (function coreConstructor() {
+var core = (function coreConstructor() {
 
     "use strict";
 
     var display,
         editor,
         document_ready_event;
-
-    function initialise() {
-
-        document.removeEventListener(document_ready_event, initialise);
-
-        display = constructDisplay();
-
-        /*
-            This should be moved offsite eventually. I'm technically having one sibling act like a parent because the actual parent isn't around.
-            Problem is... Right now I'm inside the contained area and the decision making for what exactly this bootup sequence boots up is supposed to happen outside this contained area (the parent) I haven't reached the point where I can define that area yet, I think, really, maybe, at night mostly. Soooo I'll have to make due with relation misuse I guess?
-
-            How it's supposed to work, as I see it now: There is a config somewhere that defines what is loaded in this sequence. That list is read first and passed onto here. This initialise then blindly executes the appropriate protocols on each individual registered entry in that list. There should be no actual knowledge of what is inside that list here.
-
-            What I could do ... is just build a quick array and loop over that, but it may actually cause me to blindly go down a dead end that is hard to come back from... so I'm hesitant.
-
-            In fact... the screen deploy inside this initialise should actually be moved off site as well now that I think about it. The load sequence itself doesn't have any real relationship with what is being loaded. It just makes sure it is being loaded and what ever is being loaded follows the proper channels and protocols...
-
-            I think I need help with keeping an overview here before I move on in that direction.
-        */
-
-        // Lets start building the editor itself.
-        editor = constructEditor();
-
-        display.renderCurrentDisplayList();
-
-    }
 
     function constructDisplay() {
 
@@ -52,14 +26,27 @@ core = (function coreConstructor() {
 
     // function declarations
 
-        function resizeDisplay() {
+        function drawRect(g, x, y, w, h, c) {
 
-            display_element.height = window.innerHeight;
-            display_element.width = window.innerWidth;
+            var old_fill_style;
 
-            renderCurrentDisplayList();
+            old_fill_style = g.fillStyle;
 
+            g.fillStyle = c;
+            g.fillRect(x, y, w, h);
+
+            if (old_fill_style) {
+
+                g.fillStyle = old_fill_style;
+
+            }
         }
+
+        // function drawPixel(g, x, y, color) {
+
+        //     drawRect(g, x, y, 1, 1, color);
+
+        // }
 
         function addDisplayComponent(display_component) {
 
@@ -90,8 +77,6 @@ core = (function coreConstructor() {
                 calculated_y = display_component.y;
                 calculated_width = display_component.getAbsoluteOrRelativeWidth(display_element.width);
                 calculated_height = display_component.getAbosluteOrRelativeHeight(display_element.height);
-                
-
 
                 if (display_component.relative_height !== null) {
 
@@ -116,25 +101,13 @@ core = (function coreConstructor() {
 
         }
 
-        function drawPixel (g, x, y, color) {
+        function resizeDisplay() {
 
-            drawRect(g, x, y, 1, 1, color);
+            display_element.height = window.innerHeight;
+            display_element.width = window.innerWidth;
 
-        }
+            renderCurrentDisplayList();
 
-        function drawRect (g, x, y, w, h, c) {
-
-            var old_fill_style;
-
-            old_fill_style = g.fillStyle
-
-            g.fillStyle = c;
-            g.fillRect(x, y, w, h);
-
-            if (old_fill_style)
-            {
-                g.fillStyle = old_fill_style;
-            }
         }
 
     // variable initiations
@@ -180,11 +153,9 @@ core = (function coreConstructor() {
 
                 return this.relative_width * related_width;
 
-            } else {
-
-                return this.width;
-
             }
+
+            return this.width;
 
         }
 
@@ -194,11 +165,9 @@ core = (function coreConstructor() {
 
                 return this.relative_height * related_height;
 
-            } else {
-
-                return this.height;
-
             }
+
+            return this.height;
 
         }
 
@@ -222,6 +191,8 @@ core = (function coreConstructor() {
 
     function constructEditor() {
 
+        var self;
+
         self = new DisplayComponent();
 
         self.relative_width = 1;
@@ -232,6 +203,32 @@ core = (function coreConstructor() {
         display.addDisplayComponent(self);
 
         return self;
+
+    }
+
+    function initialise() {
+
+        document.removeEventListener(document_ready_event, initialise);
+
+        display = constructDisplay();
+
+        /*
+            This should be moved offsite eventually. I'm technically having one sibling act like a parent because the actual parent isn't around.
+            Problem is... Right now I'm inside the contained area and the decision making for what exactly this bootup sequence boots up is supposed to happen outside this contained area (the parent) I haven't reached the point where I can define that area yet, I think, really, maybe, at night mostly. Soooo I'll have to make due with relation misuse I guess?
+
+            How it's supposed to work, as I see it now: There is a config somewhere that defines what is loaded in this sequence. That list is read first and passed onto here. This initialise then blindly executes the appropriate protocols on each individual registered entry in that list. There should be no actual knowledge of what is inside that list here.
+
+            What I could do ... is just build a quick array and loop over that, but it may actually cause me to blindly go down a dead end that is hard to come back from... so I'm hesitant.
+
+            In fact... the screen deploy inside this initialise should actually be moved off site as well now that I think about it. The load sequence itself doesn't have any real relationship with what is being loaded. It just makes sure it is being loaded and what ever is being loaded follows the proper channels and protocols...
+
+            I think I need help with keeping an overview here before I move on in that direction.
+        */
+
+        // Lets start building the editor itself.
+        editor = constructEditor();
+
+        display.renderCurrentDisplayList();
 
     }
 
