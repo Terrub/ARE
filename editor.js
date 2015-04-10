@@ -16,39 +16,101 @@ var core = (function coreConstructor() {
         editor,
         document_ready_event;
 
+    function isUndefined(value) {
+
+        return (typeof value === "undefined");
+
+    }
+
+    ////////////////////////////////////////////////////////////////
+    // DISPLAY
+    ////////////////////////////////////////////////////////////////
     function constructDisplay() {
 
-    // variable declarations
+        // variable declarations
 
-        var self,
+        var display,
             display_element,
             display_list;
 
-    // function declarations
+        // function declarations
 
-        function drawRect(g, x, y, w, h, c) {
+        // function drawRect(g, x, y, width, height, color) {
 
-            var old_fill_style;
+        //     var old_fill_style;
 
-            old_fill_style = g.fillStyle;
+        //     old_fill_style = g.fillStyle;
 
-            g.fillStyle = c;
-            g.fillRect(x, y, w, h);
+        //     g.fillStyle = color;
+        //     g.fillRect(x, y, width, height);
 
-            if (old_fill_style) {
+        //     if (old_fill_style) {
 
-                g.fillStyle = old_fill_style;
+        //         g.fillStyle = old_fill_style;
 
-            }
-        }
+        //     }
+        // }
 
-        // function drawPixel(g, x, y, color) {
+        // function drawPixels(g, pixel_list) {
 
-        //     drawRect(g, x, y, 1, 1, color);
+        //     var pixel;
+
+        //     for (pixel in pixel_list) {
+
+        //         drawRect(g, pixel.x, pixel.y, 1, 1, pixel.color);
+
+        //     }
 
         // }
 
-        function addDisplayComponent(display_component) {
+        /*
+            This just prints out a list of lines but could be made smarter in the future by some smart sorts to figure out gaps or clumps of lines that can be drawn within a single path, or even accept curved lines or more than just 2 dimensions.
+        */
+        // function drawLines(g, line_list) {
+
+        //     var old_stroke_style,
+        //         current_key,
+        //         line;
+
+        //     old_stroke_style = g.strokeStyle;
+
+        //     for (current_key in line_list) {
+
+        //         line = line_list[current_key];
+
+        //         if (isUndefined(line)) {
+
+        //             throw new Error("line is undefined");
+
+        //         }
+
+        //         g.strokeStyle = line.color;
+        //         g.beginPath();
+
+        //         g.moveTo(line.start.x, line.start.y);
+
+        //         g.lineTo(line.end.x, line.end.y);
+
+        //         g.lineWidth = line.thickness;
+        //         g.stroke();
+
+        //     }
+
+        //     if (old_stroke_style) {
+
+        //         g.strokeStyle = old_stroke_style;
+
+        //     }
+
+        // }
+
+        function registerForDisplay(display_component) {
+
+            if (isUndefined(display_component)) {
+
+                throw new Error("display_component is undefined");
+
+            }
 
             display_list[display_component] = display_component;
 
@@ -56,46 +118,36 @@ var core = (function coreConstructor() {
 
         function renderCurrentDisplayList() {
 
+            renderComponents(display_list);
+
+        }
+
+        function renderComponents(component_list) {
+
             var current_key,
                 display_component,
-                calculated_x,
-                calculated_y,
-                calculated_width,
-                calculated_height;
+                children,
+                child;
 
-            for (current_key in display_list) {
+            for (current_key in component_list) {
 
-                display_component = display_list[current_key];
+                display_component = component_list[current_key];
 
-                if (display_component === undefined) {
+                if (isUndefined(display_component)) {
 
-                    throw new Error("found empty display_component?");
+                    throw new Error("display_component is undefined");
 
                 }
 
-                calculated_x = display_component.x;
-                calculated_y = display_component.y;
-                calculated_width = display_component.getAbsoluteOrRelativeWidth(display_element.width);
-                calculated_height = display_component.getAbosluteOrRelativeHeight(display_element.height);
+                display_component.render(display_element.getContext("2d"), display_element.width, display_element.height);
 
-                if (display_component.relative_height !== null) {
+                children = display_component.getChildren();
 
-                    calculated_height = display_component.relative_height * display_element.height;
+                if (!isUndefined(children)) {
 
-                } else {
-
-                    calculated_height = display_component.height;
+                    renderComponents(children);
 
                 }
-
-                drawRect(
-                    display_element.getContext('2d'),
-                    calculated_x,
-                    calculated_y,
-                    calculated_width,
-                    calculated_height,
-                    display_component.background_color
-                );
 
             }
 
@@ -110,25 +162,27 @@ var core = (function coreConstructor() {
 
         }
 
-    // variable initiations
+        // variable initiations
 
         display_list = {};
 
         display_element = document.createElement("canvas");
         console.log("ref to canvas:", display_element);
-        // This could be seperated into a component initialisation protocol
+
+        // This could be separated into a component initialisation protocol
         display_element.style.position = "absolute";
         display_element.style.top = '0px';
         display_element.style.left = '0px';
 
         resizeDisplay();
 
-        self = {};
+        display = {};
 
-        self.addDisplayComponent = addDisplayComponent;
-        self.renderCurrentDisplayList = renderCurrentDisplayList;
+        display.registerForDisplay = registerForDisplay;
+        display.renderCurrentDisplayList = renderCurrentDisplayList;
 
-    // function body;
+
+        // function body;
 
         // This looks to be the responsibility of the display manager?
         document.body.appendChild(display_element);
@@ -139,15 +193,19 @@ var core = (function coreConstructor() {
 
         window.addEventListener("resize", resizeDisplay);
 
-    // Return statement
 
-        return self;
+        // Return statement
+
+        return display;
 
     }
 
+    ////////////////////////////////////////////////////////////////
+    // DISPLAY COMPONENT
+    ////////////////////////////////////////////////////////////////
     function DisplayComponent() {
 
-        function getAbsoluteOrRelativeWidth(related_width) {
+        function getWidth(related_width) {
 
             if (this.relative_width !== null) {
 
@@ -159,7 +217,7 @@ var core = (function coreConstructor() {
 
         }
 
-        function getAbosluteOrRelativeHeight(related_height) {
+        function getHeight(related_height) {
 
             if (this.relative_height !== null) {
 
@@ -171,38 +229,138 @@ var core = (function coreConstructor() {
 
         }
 
+        function addChild(proposed_child) {
+
+            if (isUndefined(proposed_child)) {
+
+                throw new Error("proposed_child is undefined");
+
+            }
+
+            this.children[proposed_child] = proposed_child;
+
+            proposed_child.registerParent(this);
+
+        }
+
+        function registerParent(proposed_parent) {
+
+            if (isUndefined(proposed_parent)) {
+
+                throw new Error("proposed_parent is undefined");
+
+            }
+
+            this.parent = proposed_parent;
+
+        }
+
+        function getChildren() {
+
+            return this.children;
+
+        }
+
+        function render(g, relative_width, relative_height) {
+
+            // Stub for now.
+
+        }
 
         // Defaults
+        this.parent = null;
+        this.children = {};
+
         this.x = 0;
         this.y = 0;
         this.width = 300;
         this.height = 200;
         this.background_color = "#000000";
-        this.background_alpha = 0.8;
-        this.border_size = 1;
-        this.border_color = "#333333";
         this.relative_width = null;
         this.relative_height = null;
 
-        this.getAbsoluteOrRelativeWidth = getAbsoluteOrRelativeWidth;
-        this.getAbosluteOrRelativeHeight = getAbosluteOrRelativeHeight;
+        this.render = render;
+        this.addChild = addChild;
+        this.registerParent = registerParent;
+        this.getChildren = getChildren;
+        this.getWidth = getWidth;
+        this.getHeight = getHeight;
 
     }
 
+    function constructLetterUppercaseA() {
+
+        var lowercase_a;
+
+        function render(g, relative_width, relative_height) {
+
+            g.strokeStyle = "#ffffff";
+            g.beginPath();
+
+            g.moveTo(0, 1);
+            g.lineTo(0, 7);
+
+            g.moveTo(1, 0);
+            g.lineTo(3, 0);
+
+            g.moveTo(1, 3);
+            g.lineTo(3, 3);
+
+            g.moveTo(4, 1);
+            g.lineTo(4, 7);
+
+            g.lineWidth = 1;
+            g.stroke();
+
+        }
+
+        lowercase_a = new DisplayComponent();
+
+        lowercase_a.render = render;
+
+        return lowercase_a;
+
+    }
+
+    ////////////////////////////////////////////////////////////////
+    // EDITOR
+    ////////////////////////////////////////////////////////////////
     function constructEditor() {
 
-        var self;
+        var editor,
+            letter_a;
 
-        self = new DisplayComponent();
+        function render(g, relative_width, relative_height) {
 
-        self.relative_width = 1;
-        self.relative_height = 1;
+            var calculated_x,
+                calculated_y,
+                calculated_width,
+                calculated_height;
+                
+            calculated_x = editor.x;
+            calculated_y = editor.y;
+            calculated_width = editor.getWidth(relative_width);
+            calculated_height = editor.getHeight(relative_height);
 
-        self.background_color = "#101010";
+            g.fillStyle = editor.background_color;
+            g.fillRect(calculated_x, calculated_y, calculated_width, calculated_height);
 
-        display.addDisplayComponent(self);
+        }
 
-        return self;
+        editor = new DisplayComponent();
+
+        editor.render = render;
+
+        editor.relative_width = 1;
+        editor.relative_height = 1;
+
+        editor.background_color = "#101010";
+
+        // Create all the children we need here. This eventually needs to be a list that can be filled or defined, OFF-site so we can have configs dealing with which connections happen where.
+        letter_a = constructLetterUppercaseA();
+        editor.addChild(letter_a);
+
+        return editor;
 
     }
 
@@ -227,6 +385,8 @@ var core = (function coreConstructor() {
 
         // Lets start building the editor itself.
         editor = constructEditor();
+
+        display.registerForDisplay(editor);
 
         display.renderCurrentDisplayList();
 
