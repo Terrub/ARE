@@ -31,25 +31,22 @@ var core = (function coreConstructor() {
 
         var display,
             display_element,
-            display_list;
+            display_list,
+            g,
+            gLib,
+            text_size,
+            text_thickness,
+            x_offset,
+            y_offset;
 
         // function declarations
 
-        // function drawRect(g, x, y, width, height, color) {
+        function drawRect(x, y, width, height) {
 
-        //     var old_fill_style;
+            g.fillStyle = "rgba(33, 33, 33, 1)";
+            g.fillRect(x, y, width, height);
 
-        //     old_fill_style = g.fillStyle;
-
-        //     g.fillStyle = color;
-        //     g.fillRect(x, y, width, height);
-
-        //     if (old_fill_style) {
-
-        //         g.fillStyle = old_fill_style;
-
-        //     }
-        // }
+        }
 
         // function drawPixels(g, pixel_list) {
 
@@ -104,6 +101,25 @@ var core = (function coreConstructor() {
 
         // }
 
+        function drawLine(aX, aY, bX, bY) {
+
+            g.strokeStyle = "rgba(255,255,255,1)";
+            g.beginPath();
+
+            g.moveTo(
+                ((aX * text_size) + x_offset) + 0.5,
+                ((aY * text_size) + y_offset) + 0.5
+            );
+            g.lineTo(
+                ((bX * text_size) + x_offset) + 0.5,
+                ((bY * text_size) + y_offset) + 0.5
+            );
+
+            g.lineWidth = 1;
+            g.stroke();
+
+        }
+
         function registerForDisplay(display_component) {
 
             if (isUndefined(display_component)) {
@@ -138,13 +154,14 @@ var core = (function coreConstructor() {
                     throw new Error("display_component is undefined");
 
                 }
-
-                display_component.render(display_element.getContext("2d"), display_element.width, display_element.height);
+                // #TODO: Instead of just letting the component do the rendering (which is a possible security breach and delegates our responsibility to the wrong actor.) we should probably hand off a renderable objectlist to the component that wants to render, then have it record all the requested drawing of the component and translate and or execute those requests here. This function is responsible for making sure the canvas gets the right intel. Not the component. We just give the component a means to tell us what they need.
+                // NOTE_TO_SELF: This is where the ARE principle comes in. We wanted to be able to read our own descriptors so the editor itself can tell me (the writer) what the functions and methods can and cannot do. The outside object explains to me what I options I have, then I can choose which of the given options fit my needs the best.
+                display_component.render(gLib, display_element.width, display_element.height);
 
                 children = display_component.getChildren();
 
                 if (!isUndefined(children)) {
-
+                    // Simple and dirty, just to get it working. This needs to be refactored.
                     renderComponents(children);
 
                 }
@@ -158,6 +175,7 @@ var core = (function coreConstructor() {
             display_element.height = window.innerHeight;
             display_element.width = window.innerWidth;
 
+            // #TODO: This is not our responsibility. Send it up the chain of command!
             renderCurrentDisplayList();
 
         }
@@ -181,6 +199,16 @@ var core = (function coreConstructor() {
         display.registerForDisplay = registerForDisplay;
         display.renderCurrentDisplayList = renderCurrentDisplayList;
 
+        g = display_element.getContext("2d");
+
+        gLib = {};
+
+        gLib.drawLine = drawLine;
+        gLib.drawRect = drawRect;
+
+        text_size = 10;
+        x_offset = 4;
+        y_offset = 4;
 
         // function body;
 
@@ -204,30 +232,6 @@ var core = (function coreConstructor() {
     // DISPLAY COMPONENT
     ////////////////////////////////////////////////////////////////
     function DisplayComponent() {
-
-        function getWidth(related_width) {
-
-            if (this.relative_width !== null) {
-
-                return this.relative_width * related_width;
-
-            }
-
-            return this.width;
-
-        }
-
-        function getHeight(related_height) {
-
-            if (this.relative_height !== null) {
-
-                return this.relative_height * related_height;
-
-            }
-
-            return this.height;
-
-        }
 
         function addChild(proposed_child) {
 
@@ -276,18 +280,17 @@ var core = (function coreConstructor() {
         this.width = 300;
         this.height = 200;
         this.background_color = "#000000";
-        this.relative_width = null;
-        this.relative_height = null;
 
         this.render = render;
         this.addChild = addChild;
         this.registerParent = registerParent;
         this.getChildren = getChildren;
-        this.getWidth = getWidth;
-        this.getHeight = getHeight;
 
     }
 
+    ////////////////////////////////////////////////////////////////
+    // LETTER A
+    ////////////////////////////////////////////////////////////////
     function constructLetterUppercaseA() {
 
         var lowercase_a,
@@ -305,35 +308,15 @@ var core = (function coreConstructor() {
         function render(g, relative_width, relative_height) {
 
             var index,
-            line,
-            size,
-            x_offset,
-            y_offset;
-
-            g.strokeStyle = "rgba(255,255,255,1)";
-            g.beginPath();
-
-            size = 1;
-            x_offset = 8;
-            y_offset = 8;
+            line;
 
             for (index in lines) {
 
                 line = lines[index];
 
-                g.moveTo(
-                    ((line.start.x * size) + x_offset) + 0.5,
-                    ((line.start.y * size) + y_offset) + 0.5
-                );
-                g.lineTo(
-                    ((line.end.x * size) + x_offset) + 0.5,
-                    ((line.end.y * size) + y_offset) + 0.5
-                );
+                g.drawLine(line.start.x, line.start.y, line.end.x, line.end.y);
 
             }
-
-            g.lineWidth = 1;
-            g.stroke();
 
         }
 
@@ -355,18 +338,7 @@ var core = (function coreConstructor() {
 
         function render(g, relative_width, relative_height) {
 
-            var calculated_x,
-                calculated_y,
-                calculated_width,
-                calculated_height;
-                
-            calculated_x = editor.x;
-            calculated_y = editor.y;
-            calculated_width = editor.getWidth(relative_width);
-            calculated_height = editor.getHeight(relative_height);
-
-            g.fillStyle = editor.background_color;
-            g.fillRect(calculated_x, calculated_y, calculated_width, calculated_height);
+            g.drawRect(editor.x, editor.y, relative_width, relative_height);
 
         }
 
@@ -374,10 +346,7 @@ var core = (function coreConstructor() {
 
         editor.render = render;
 
-        editor.relative_width = 1;
-        editor.relative_height = 1;
-
-        editor.background_color = "#101010";
+        editor.background_color = "rgba(33,33,33,1)";
 
         // Create all the children we need here. This eventually needs to be a list that can be filled or defined, OFF-site so we can have configs dealing with which connections happen where.
         letter_a = constructLetterUppercaseA();
