@@ -128,6 +128,7 @@ var core = (function coreConstructor() {
 
             }
 
+            // #TODO: See comment on similar syntax over at: DisplayComponent.addChild();
             display_list[display_component] = display_component;
 
         }
@@ -154,8 +155,8 @@ var core = (function coreConstructor() {
                     throw new Error("display_component is undefined");
 
                 }
-                // #TODO: Instead of just letting the component do the rendering (which is a possible security breach and delegates our responsibility to the wrong actor.) we should probably hand off a renderable objectlist to the component that wants to render, then have it record all the requested drawing of the component and translate and or execute those requests here. This function is responsible for making sure the canvas gets the right intel. Not the component. We just give the component a means to tell us what they need.
-                // NOTE_TO_SELF: This is where the ARE principle comes in. We wanted to be able to read our own descriptors so the editor itself can tell me (the writer) what the functions and methods can and cannot do. The outside object explains to me what I options I have, then I can choose which of the given options fit my needs the best.
+                // #TODO: Instead of just letting the component do the rendering (which is a possible security breach and delegates our responsibility to the wrong actor.) we should probably hand off a renderable objectlist to the component that wants to render, then have it record all the requested drawing of the component and translate and or execute those requests here. This function is responsible for making sure the canvas gets the right intel, the component is not. We just give the component a means to tell us what they need.
+                // NOTE_TO_SELF: This is where the ARE principle comes in. We wanted to be able to read our own descriptors so the editor itself can tell me (the writer) what the functions and methods can and cannot do. The outside object explains to me what options I have, then I can choose which of the given options fit my needs the best.
                 display_component.render(gLib, display_element.width, display_element.height);
 
                 children = display_component.getChildren();
@@ -241,6 +242,7 @@ var core = (function coreConstructor() {
 
             }
 
+            // #TODO: We can't use the proposed_child itself as an object key because this, right now, evaluates to "[object Object]". Meaning we can never have more than 1 child. I think we need to look into naming objects or at least using (internal) ID's to distinguish between which child we're talking about here. Perhaps defining a native ToString like method will remedy this quickly, but that might not per se be correct either. ID's is probably the most correct.
             this.children[proposed_child] = proposed_child;
 
             proposed_child.registerParent(this);
@@ -334,7 +336,8 @@ var core = (function coreConstructor() {
     function constructEditor() {
 
         var editor,
-            letter_a;
+            letter_a1,
+            letter_a2;
 
         function render(g, relative_width, relative_height) {
 
@@ -349,8 +352,10 @@ var core = (function coreConstructor() {
         editor.background_color = "rgba(33,33,33,1)";
 
         // Create all the children we need here. This eventually needs to be a list that can be filled or defined, OFF-site so we can have configs dealing with which connections happen where.
-        letter_a = constructLetterUppercaseA();
-        editor.addChild(letter_a);
+        letter_a1 = constructLetterUppercaseA();
+        editor.addChild(letter_a1);
+        letter_a2 = constructLetterUppercaseA();
+        editor.addChild(letter_a2);
 
         return editor;
 
