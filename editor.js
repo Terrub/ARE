@@ -290,24 +290,47 @@ var core = (function coreConstructor() {
 
     function constructLetterUppercaseA() {
 
-        var lowercase_a;
+        var lowercase_a,
+            lines;
+
+        lines = {
+           0: {start: {x: 1, y: 8}, end: {x: 1, y: 2}}, // Left pole up
+           1: {start: {x: 1, y: 2}, end: {x: 2, y: 1}}, // left slant up to mid
+           2: {start: {x: 2, y: 1}, end: {x: 4, y: 1}}, // top bar right
+           3: {start: {x: 4, y: 1}, end: {x: 5, y: 2}}, // right slant down to right pole
+           4: {start: {x: 5, y: 2}, end: {x: 5, y: 8}}, // right pole down
+           5: {start: {x: 1, y: 4}, end: {x: 5, y: 4}} // middle bar right
+        }
 
         function render(g, relative_width, relative_height) {
 
-            g.strokeStyle = "#ffffff";
+            var index,
+            line,
+            size,
+            x_offset,
+            y_offset;
+
+            g.strokeStyle = "rgba(255,255,255,1)";
             g.beginPath();
 
-            g.moveTo(0, 1);
-            g.lineTo(0, 7);
+            size = 1;
+            x_offset = 8;
+            y_offset = 8;
 
-            g.moveTo(1, 0);
-            g.lineTo(3, 0);
+            for (index in lines) {
 
-            g.moveTo(1, 3);
-            g.lineTo(3, 3);
+                line = lines[index];
 
-            g.moveTo(4, 1);
-            g.lineTo(4, 7);
+                g.moveTo(
+                    ((line.start.x * size) + x_offset) + 0.5,
+                    ((line.start.y * size) + y_offset) + 0.5
+                );
+                g.lineTo(
+                    ((line.end.x * size) + x_offset) + 0.5,
+                    ((line.end.y * size) + y_offset) + 0.5
+                );
+
+            }
 
             g.lineWidth = 1;
             g.stroke();
