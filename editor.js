@@ -14,6 +14,7 @@ var core = (function coreConstructor() {
 
     var display,
         editor,
+        displayComponent,
         document_ready_event;
 
     function isUndefined(value) {
@@ -34,7 +35,7 @@ var core = (function coreConstructor() {
             display_list,
             g,
             gLib,
-            text_size,
+            scale,
             text_thickness,
             x_offset,
             y_offset;
@@ -107,12 +108,12 @@ var core = (function coreConstructor() {
             g.beginPath();
 
             g.moveTo(
-                ((aX * text_size) + x_offset) + 0.5,
-                ((aY * text_size) + y_offset) + 0.5
+                ((aX * scale) + x_offset) + 0.5,
+                ((aY * scale) + y_offset) + 0.5
             );
             g.lineTo(
-                ((bX * text_size) + x_offset) + 0.5,
-                ((bY * text_size) + y_offset) + 0.5
+                ((bX * scale) + x_offset) + 0.5,
+                ((bY * scale) + y_offset) + 0.5
             );
 
             g.lineWidth = 1;
@@ -135,16 +136,19 @@ var core = (function coreConstructor() {
 
         function renderCurrentDisplayList() {
 
-            renderComponents(display_list);
+            renderComponents(display_list, 0, 0, display_element.width, display_element.height);
 
         }
 
-        function renderComponents(component_list) {
+        function renderComponents(component_list, local_x, local_y, local_width, local_height) {
 
             var current_key,
                 display_component,
                 children,
                 child;
+
+                x_offset += local_x;
+                y_offset += local_y;
 
             for (current_key in component_list) {
 
@@ -155,17 +159,20 @@ var core = (function coreConstructor() {
                     throw new Error("display_component is undefined");
 
                 }
+
                 // #TODO: Instead of just letting the component do the rendering (which is a possible security breach and delegates our responsibility to the wrong actor.) we should probably hand off a renderable objectlist to the component that wants to render, then have it record all the requested drawing of the component and translate and or execute those requests here. This function is responsible for making sure the canvas gets the right intel, the component is not. We just give the component a means to tell us what they need.
                 // NOTE_TO_SELF: This is where the ARE principle comes in. We wanted to be able to read our own descriptors so the editor itself can tell me (the writer) what the functions and methods can and cannot do. The outside object explains to me what options I have, then I can choose which of the given options fit my needs the best.
-                display_component.render(gLib, display_element.width, display_element.height);
+                display_component.render(gLib, local_width, local_height);
 
                 children = display_component.getChildren();
 
                 if (!isUndefined(children)) {
-                    // Simple and dirty, just to get it working. This needs to be refactored.
-                    renderComponents(children);
+                    // #TODO: Simple and dirty, just to get it working. This needs to be refactored.
+                    renderComponents(children, display_component.padding_left, display_component.padding_top);
 
                 }
+
+                x_offset += (display_component.width * scale);
 
             }
 
@@ -183,6 +190,9 @@ var core = (function coreConstructor() {
 
         // variable initiations
 
+        scale = 1;
+        x_offset = 4;
+        y_offset = 4;
         display_list = {};
 
         display_element = document.createElement("canvas");
@@ -192,8 +202,6 @@ var core = (function coreConstructor() {
         display_element.style.position = "absolute";
         display_element.style.top = '0px';
         display_element.style.left = '0px';
-
-        resizeDisplay();
 
         display = {};
 
@@ -207,11 +215,9 @@ var core = (function coreConstructor() {
         gLib.drawLine = drawLine;
         gLib.drawRect = drawRect;
 
-        text_size = 10;
-        x_offset = 4;
-        y_offset = 4;
-
         // function body;
+
+        resizeDisplay();
 
         // This looks to be the responsibility of the display manager?
         document.body.appendChild(display_element);
@@ -232,7 +238,10 @@ var core = (function coreConstructor() {
     ////////////////////////////////////////////////////////////////
     // DISPLAY COMPONENT
     ////////////////////////////////////////////////////////////////
-    function DisplayComponent() {
+    displayComponent = (function constructDisplayComponent() {
+
+        var displayComponent,
+            current_id;
 
         function addChild(proposed_child) {
 
@@ -242,8 +251,7 @@ var core = (function coreConstructor() {
 
             }
 
-            // #TODO: We can't use the proposed_child itself as an object key because this, right now, evaluates to "[object Object]". Meaning we can never have more than 1 child. I think we need to look into naming objects or at least using (internal) ID's to distinguish between which child we're talking about here. Perhaps defining a native ToString like method will remedy this quickly, but that might not per se be correct either. ID's is probably the most correct.
-            this.children[proposed_child] = proposed_child;
+            this.children[proposed_child.id] = proposed_child;
 
             proposed_child.registerParent(this);
 
@@ -270,25 +278,55 @@ var core = (function coreConstructor() {
         function render(g, relative_width, relative_height) {
 
             // Stub for now.
+            // Should probably turn this into a recognisable default so we know something is called without a render override? I.e.: Should not be rendered, or should be told how to render.
 
         }
 
-        // Defaults
-        this.parent = null;
-        this.children = {};
+        function getCurrentId() {
 
-        this.x = 0;
-        this.y = 0;
-        this.width = 300;
-        this.height = 200;
-        this.background_color = "#000000";
+            current_id += 1;
 
-        this.render = render;
-        this.addChild = addChild;
-        this.registerParent = registerParent;
-        this.getChildren = getChildren;
+            return current_id;
 
-    }
+        }
+
+        function createInstance() {
+
+            var newDisplayComponent;
+
+            newDisplayComponent = {};
+
+            // Defaults
+            newDisplayComponent.id = getCurrentId();
+            newDisplayComponent.parent = null;
+            newDisplayComponent.children = {};
+
+            newDisplayComponent.x = 0;
+            newDisplayComponent.y = 0;
+            newDisplayComponent.width = 300;
+            newDisplayComponent.height = 200;
+            newDisplayComponent.padding_left = 0;
+            newDisplayComponent.padding_top = 0;
+            newDisplayComponent.background_color = "#000000";
+
+            newDisplayComponent.render = render;
+            newDisplayComponent.addChild = addChild;
+            newDisplayComponent.registerParent = registerParent;
+            newDisplayComponent.getChildren = getChildren;
+
+            return newDisplayComponent;
+
+        }
+
+        current_id = 0;
+
+        displayComponent = {};
+
+        displayComponent.createInstance = createInstance;
+
+        return displayComponent;
+
+    }());
 
     ////////////////////////////////////////////////////////////////
     // LETTER A
@@ -298,6 +336,7 @@ var core = (function coreConstructor() {
         var lowercase_a,
             lines;
 
+        // This is a value that is now hardset, but should be determined based on user input!
         lines = {
            0: {start: {x: 1, y: 8}, end: {x: 1, y: 2}}, // Left pole up
            1: {start: {x: 1, y: 2}, end: {x: 2, y: 1}}, // left slant up to mid
@@ -322,7 +361,12 @@ var core = (function coreConstructor() {
 
         }
 
-        lowercase_a = new DisplayComponent();
+        lowercase_a = displayComponent.createInstance();
+
+        // This is a value that is now hardset, but should be determined based on user input!
+        lowercase_a.width = 6;
+        // This is a value that is now hardset, but should be determined based on user input!
+        lowercase_a.height = 9;
 
         lowercase_a.render = render;
 
@@ -337,7 +381,8 @@ var core = (function coreConstructor() {
 
         var editor,
             letter_a1,
-            letter_a2;
+            letter_a2,
+            letter_a3;
 
         function render(g, relative_width, relative_height) {
 
@@ -345,7 +390,7 @@ var core = (function coreConstructor() {
 
         }
 
-        editor = new DisplayComponent();
+        editor = displayComponent.createInstance();
 
         editor.render = render;
 
@@ -356,6 +401,8 @@ var core = (function coreConstructor() {
         editor.addChild(letter_a1);
         letter_a2 = constructLetterUppercaseA();
         editor.addChild(letter_a2);
+        letter_a3 = constructLetterUppercaseA();
+        editor.addChild(letter_a3);
 
         return editor;
 
