@@ -8,7 +8,7 @@
 
 --------------------------------------------------------------*/
 
-var core = (function coreConstructor() {
+var core = (function constructCore() {
 
     "use strict";
 
@@ -130,11 +130,14 @@ var core = (function coreConstructor() {
             }
 
             // #TODO: See comment on similar syntax over at: DisplayComponent.addChild();
-            display_list[display_component] = display_component;
+            display_list[display_component.id] = display_component;
 
         }
 
         function renderCurrentDisplayList() {
+
+            x_offset = 0;
+            y_offset = 0;
 
             renderComponents(display_list, 0, 0, display_element.width, display_element.height);
 
@@ -191,8 +194,6 @@ var core = (function coreConstructor() {
         // variable initiations
 
         scale = 1;
-        x_offset = 4;
-        y_offset = 4;
         display_list = {};
 
         display_element = document.createElement("canvas");
@@ -210,6 +211,7 @@ var core = (function coreConstructor() {
 
         g = display_element.getContext("2d");
 
+        // I want to look into segregating this into a seperate class altogether. Perhaps even load in a graphics library per specific setting, which would allow us to draw the same or similar results using different techniques depending on user settings. (e.g.: appending a div with a width, height and bg-color or drawing a rectangle with width height and colour on a canvas.)
         gLib = {};
 
         gLib.drawLine = drawLine;
@@ -227,7 +229,6 @@ var core = (function coreConstructor() {
         */
 
         window.addEventListener("resize", resizeDisplay);
-
 
         // Return statement
 
@@ -393,6 +394,8 @@ var core = (function coreConstructor() {
         editor = displayComponent.createInstance();
 
         editor.render = render;
+        editor.padding_left = 4;
+        editor.padding_top = 4;
 
         editor.background_color = "rgba(33,33,33,1)";
 
