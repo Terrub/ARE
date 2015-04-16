@@ -312,7 +312,8 @@
                     ((bY * scale) + y_offset) + 0.5
                 );
 
-                g.lineWidth = width;
+                g.lineCap = "round";
+                g.lineWidth = (width * scale);
                 g.stroke();
 
             }
