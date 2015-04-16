@@ -23,6 +23,8 @@
 
             faultOnError(err);
 
+            throw err;
+
         }
 
     }
@@ -624,10 +626,7 @@
         ////////////////////////////////////////////////////////////////
         function constructEditor() {
 
-            var editor,
-                letter_a1,
-                letter_a2,
-                letter_a3;
+            var editor;
 
             function render(g, relative_width, relative_height) {
 
@@ -645,12 +644,9 @@
             editor.padding_top = 4;
 
             // Create all the children we need here. This eventually needs to be a list that can be filled or defined, OFF-site so we can have configs dealing with which connections happen where.
-            letter_a1 = constructLetterUppercaseA();
-            editor.addChild(letter_a1);
-            letter_a2 = constructLetterUppercaseA();
-            editor.addChild(letter_a2);
-            letter_a3 = constructLetterUppercaseA();
-            editor.addChild(letter_a3);
+            // editor.addChild(constructLetterUppercaseA());
+            // editor.addChild(constructLetterUppercaseA());
+            // editor.addChild(constructLetterUppercaseA());
 
             return editor;
 
@@ -690,6 +686,20 @@
 
         }
 
+        function keyDownHandler(keyboardEvent) {
+
+            console.log(keyboardEvent);
+
+            if (keyboardEvent.keyCode === 65) {
+
+                editor.addChild(constructLetterUppercaseA());
+
+                display.renderCurrentDisplayList();
+
+            }
+
+        }
+
         mathCeil = Math.ceil;
 
         document_ready_event = "DOMContentLoaded";
@@ -697,6 +707,7 @@
         // throw new Error("BOO\nWOW this works?");
 
         document.addEventListener(document_ready_event, attemptToInitialise);
+        document.addEventListener("keydown", keyDownHandler);
 
     };
 
