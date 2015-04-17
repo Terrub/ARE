@@ -37,7 +37,8 @@
             editor,
             displayComponent,
             document_ready_event,
-            mathCeil;
+            mathCeil,
+            keyDownHandler;
 
         function isUndefined(value) {
 
@@ -87,7 +88,7 @@
 
             if (!isNumber(value) || !isInteger(value)) {
 
-                throw new Error("Pleae invoke 'isOdd' with a number or integer.");
+                throw new Error("Supplied value is neither a number nor an integer.");
 
             }
 
@@ -96,7 +97,7 @@
         }
 
         ////////////////////////////////////////////////////////////////
-        // FORMATIZER
+        // CLASS FORMATIZER
         ////////////////////////////////////////////////////////////////
         var formatizer = (function constructFormatizer() {
 
@@ -113,13 +114,13 @@
 
                 if (!isString(flag)) {
 
-                    throw new Error("formatizer.addFormatType expects argument #1 to be a String.");
+                    throw new Error("Supplied flag is not a string.");
 
                 }
 
                 if (!isFunction(typedefinitionTest)) {
 
-                    throw new Error("formatizer.addFormatType expects argument #2 to be a Function.");
+                    throw new Error("Supplied typedefinitionTest is not a function.");
 
                 }
 
@@ -235,7 +236,7 @@
         }());
 
         ////////////////////////////////////////////////////////////////
-        // DISPLAY
+        // CLASS DISPLAY
         ////////////////////////////////////////////////////////////////
         function constructDisplay() {
 
@@ -514,7 +515,7 @@
         }
 
         ////////////////////////////////////////////////////////////////
-        // DISPLAY COMPONENT
+        // CLASS DISPLAY COMPONENT
         ////////////////////////////////////////////////////////////////
         displayComponent = (function constructDisplayComponent() {
 
@@ -606,7 +607,7 @@
         }());
 
         ////////////////////////////////////////////////////////////////
-        // LETTER A
+        // CLASS LETTER A
         ////////////////////////////////////////////////////////////////
         function constructLetterUppercaseA() {
 
@@ -654,7 +655,7 @@
         }
 
         ////////////////////////////////////////////////////////////////
-        // EDITOR
+        // CLASS EDITOR
         ////////////////////////////////////////////////////////////////
         function constructEditor() {
 
@@ -669,16 +670,21 @@
 
             }
 
+            function addLetterA() {
+
+                editor.addChild(constructLetterUppercaseA());
+
+                display.renderCurrentDisplayList();
+
+            }
+
             editor = displayComponent.createInstance();
 
             editor.render = render;
             editor.padding_left = 4;
             editor.padding_top = 4;
 
-            // Create all the children we need here. This eventually needs to be a list that can be filled or defined, OFF-site so we can have configs dealing with which connections happen where.
-            // editor.addChild(constructLetterUppercaseA());
-            // editor.addChild(constructLetterUppercaseA());
-            // editor.addChild(constructLetterUppercaseA());
+            keyDownHandler.registerListener(editor, addLetterA, 65)
 
             return editor;
 
@@ -718,20 +724,126 @@
 
         }
 
-        function keyDownHandler(keyboardEvent) {
+        // #TODO: I feel like I can refactor this into a general eventHandler class we can instantiate with different events?
+        keyDownHandler = (function constructKeyDownHandler() {
 
-            console.log(keyboardEvent);
+            var keyDownHandler,
+                index,
+                generalKeyDownListeners,
+                specificListenersOf,
+                entry,
+                totalListeners;
 
-            if (keyboardEvent.keyCode === 65) {
+            function keyboardEventHandler(keyboardEvent) {
 
-                editor.addChild(constructLetterUppercaseA());
+                var keySpecificListeners;
 
-                display.renderCurrentDisplayList();
+                // console.log(keyboardEvent);
+
+                // Invoke all the registered listeners for the general "keyDown" event.
+
+                for (index in generalKeyDownListeners) {
+
+                    entry = generalKeyDownListeners[index];
+
+                    // #NOTE: I don't want to pass along the keyboard event here because I'd rather extract or extrapolate the needed data here at customs rather than later inside the runtime environment of our closed off core system. If we allowed registered listeners to depend on the keyboardevent, we would never be able to migrate to another system. Besides if they need key specific info, they'd better register for those specific keys then.
+
+                    // Just invoke the entry for now.
+                    entry();
+
+                }
+
+                keySpecificListeners = specificListenersOf[keyboardEvent.keyCode];
+                
+                for (index in keySpecificListeners) {
+
+                    entry = keySpecificListeners[index];
+
+                    entry();
+
+                }
 
             }
 
-        }
+            function registerListener(display_component, callback_function, key) {
 
+                if (!isFunction(callback_function)) {
+
+                    throw new Error("callback function is not a function");
+
+                }
+
+                if (isUndefined(key)) {
+
+                    generalKeyDownListeners[display_component.id] = callback_function;
+
+                } else {
+
+                    if (isUndefined(specificListenersOf[key])) {
+
+                        specificListenersOf[key] = {};
+
+                    }
+
+                    // #TODO: Really need to use internal mapping of keys in the future. I'm now assuming the invoker knows wtf they are doing and which keys they actually mean, an assumption I'm not keen on making tbh.
+                    specificListenersOf[key][display_component.id] = callback_function;
+
+                }
+
+                totalListeners += 1;
+
+                validateReasonToListen();
+
+            }
+
+            function unRegisterListener(display_component, key) {
+
+                if (isUndefined(key)) {
+
+                    delete generalKeyDownListeners[display_component.id];
+
+                } else {
+
+                    // #TODO: Really need to use internal mapping of keys in the future. I'm now assuming the invoker knows wtf they are doing and which keys they actually mean, an assumption I'm not keen on making tbh.
+                    delete keySpecificListeners[key][display_component.id];
+
+                }
+
+                totalListeners -= 1;
+
+                validateReasonToListen();
+
+            }
+
+            function validateReasonToListen() {
+
+                if (totalListeners > 0) {
+
+                    document.addEventListener("keydown", keyboardEventHandler);
+
+                } else {
+
+                    document.removeEventListener("keydown", keyboardEventHandler);
+
+                }
+
+            }
+
+            totalListeners = 0;
+
+            keyDownHandler = {};
+
+            generalKeyDownListeners = {};
+            specificListenersOf = {};
+
+            keyDownHandler.registerListener = registerListener;
+            keyDownHandler.unRegisterListener = unRegisterListener;
+
+            return keyDownHandler;
+
+        }())
+
+        // Local upvalues (for speed?)
         mathCeil = Math.ceil;
 
         document_ready_event = "DOMContentLoaded";
@@ -739,7 +851,6 @@
         // throw new Error("BOO\nWOW this works?");
 
         document.addEventListener(document_ready_event, attemptToInitialise);
-        document.addEventListener("keydown", keyDownHandler);
 
     };
 
