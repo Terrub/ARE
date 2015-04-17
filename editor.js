@@ -83,6 +83,18 @@
 
         }
 
+        function isOdd(value) {
+
+            if (!isNumber(value) || !isInteger(value)) {
+
+                throw new Error("Pleae invoke 'isOdd' with a number or integer.");
+
+            }
+
+            return ((value % 2) > 0);
+
+        }
+
         ////////////////////////////////////////////////////////////////
         // FORMATIZER
         ////////////////////////////////////////////////////////////////
@@ -301,16 +313,35 @@
 
             function drawLine(aX, aY, bX, bY, width) {
 
+                var x1,
+                    y1,
+                    x2,
+                    y2,
+                    stroke_offset;
+
+                x1 = (aX * scale) + x_offset;
+                y1 = (aY * scale) + y_offset;
+
+                x2 = (bX * scale) + x_offset;
+                y2 = (bY * scale) + y_offset;
+
+                // Hey, just a thought here, but... isn't scale supposed to be a number? Can't we convert it to an object of type number then? So we can invoke scale.isOdd() which seems a LOT more OOP like, not to mention more readible; "if scale is odd" vs "if is odd: 'scale'."
+                // #TODO: Check whether above statement is feasible or not. As number is a primitive in javascript, I currently believe.
+                if (isOdd(scale)) {
+
+                    stroke_offset = 0.5;
+
+                    x1 += stroke_offset;
+                    y1 += stroke_offset;
+                    x2 += stroke_offset;
+                    y2 += stroke_offset;
+
+                }
+
                 g.beginPath();
 
-                g.moveTo(
-                    ((aX * scale) + x_offset) + 0.5,
-                    ((aY * scale) + y_offset) + 0.5
-                );
-                g.lineTo(
-                    ((bX * scale) + x_offset) + 0.5,
-                    ((bY * scale) + y_offset) + 0.5
-                );
+                g.moveTo(x1, y1);
+                g.lineTo(x2, y2);
 
                 g.lineCap = "round";
                 g.lineWidth = (width * scale);
