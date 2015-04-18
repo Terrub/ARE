@@ -434,6 +434,13 @@
 
                     display_component = component_list[current_key];
 
+                    if ( ((display_component.width * scale) + x_offset) > display_element.width) {
+
+                        x_offset = local_x;
+                        y_offset += (display_component.height * scale);
+
+                    }
+
                     if (isUndefined(display_component)) {
 
                         throw new Error("display_component is undefined");
@@ -749,7 +756,7 @@
                     // #NOTE: I don't want to pass along the keyboard event here because I'd rather extract or extrapolate the needed data here at customs rather than later inside the runtime environment of our closed off core system. If we allowed registered listeners to depend on the keyboardevent, we would never be able to migrate to another system. Besides if they need key specific info, they'd better register for those specific keys then.
 
                     // Just invoke the entry for now.
-                    entry();
+                    attempt(entry);
 
                 }
 
@@ -759,7 +766,7 @@
 
                     entry = keySpecificListeners[index];
 
-                    entry();
+                    attempt(entry);
 
                 }
 
