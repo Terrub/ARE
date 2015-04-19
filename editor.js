@@ -38,11 +38,18 @@
             displayComponent,
             document_ready_event,
             mathCeil,
-            keyDownHandler;
+            keyDownHandler,
+            eventDispatcher;
 
         function isUndefined(value) {
 
             return (typeof value === "undefined");
+
+        }
+
+        function isDefined(value) {
+
+            return (typeof value !== "undefined");
 
         }
 
@@ -60,6 +67,7 @@
 
         function isInteger(value) {
 
+            // #NOTE: Why this? Because... for some really demented reason, (isNaN("") === false) An empty string is apparently a number?
             if (isString(value)) {
 
                 return false;
@@ -86,13 +94,19 @@
 
         function isOdd(value) {
 
-            if (!isNumber(value) || !isInteger(value)) {
-
-                throw new Error("Supplied value is neither a number nor an integer.");
-
-            }
+            onlyProceedIf(value, isNumber);
 
             return ((value % 2) > 0);
+
+        }
+
+        function onlyProceedIf(statement, check) {
+
+            if (check(statement) !== true) {
+
+                throw new Error("A checkpoint failed, check the stack for more info.");
+
+            }
 
         }
 
@@ -112,17 +126,9 @@
 
             function addFormatType(flag, typedefinitionTest) {
 
-                if (!isString(flag)) {
+                onlyProceedIf(flag, isString);
 
-                    throw new Error("Supplied flag is not a string.");
-
-                }
-
-                if (!isFunction(typedefinitionTest)) {
-
-                    throw new Error("Supplied typedefinitionTest is not a function.");
-
-                }
+                onlyProceedIf(typedefinitionTest, isFunction);
 
                 supported_types[flag] = typedefinitionTest;
                 supported_type_flags += flag;
@@ -205,11 +211,7 @@
 
                 }
 
-                if (!isString(supplied_format)) {
-
-                    throw new Error("supplied format is not a string");
-
-                }
+                onlyProceedIf(supplied_format, isString);
 
                 return supplied_format.replace(pattern, typeCheck);
 
@@ -400,11 +402,7 @@
 
             function registerForDisplay(display_component) {
 
-                if (isUndefined(display_component)) {
-
-                    throw new Error("display_component is undefined");
-
-                }
+                onlyProceedIf(display_component, isDefined)
 
                 // #TODO: See comment on similar syntax over at: DisplayComponent.addChild();
                 display_list[display_component.id] = display_component;
@@ -441,19 +439,15 @@
 
                     }
 
-                    if (isUndefined(display_component)) {
-
-                        throw new Error("display_component is undefined");
-
-                    }
+                    onlyProceedIf(display_component, isDefined);
 
                     // #TODO: Instead of just letting the component do the rendering (which is a possible security breach and delegates our responsibility to the wrong actor.) we should probably hand off a renderable objectlist to the component that wants to render, then have it record all the requested drawing of the component and translate and or execute those requests here. This function is responsible for making sure the canvas gets the right intel, the component is not. We just give the component a means to tell us what they need.
-                    // NOTE_TO_SELF: This is where the ARE principle comes in. We wanted to be able to read our own descriptors so the editor itself can tell me (the writer using the editor) what the functions and methods can and cannot do. The object I'm supposed to use explains to me what options I have, then I can choose which of the given options fit my needs the best.
+                    // #NOTE: This is where the ARE principle comes in. We wanted to be able to read our own descriptors so the editor itself can tell me (the writer using the editor) what the functions and methods can and cannot do. The object I'm supposed to use explains to me what options I have, then I can choose which of the given options fit my needs the best.
                     display_component.render(gLib, local_width, local_height);
 
                     children = display_component.getChildren();
 
-                    if (!isUndefined(children)) {
+                    if (isDefined(children)) {
                         // #TODO: Simple and dirty, just to get it working. This needs to be refactored.
                         renderComponents(children, display_component.padding_left, display_component.padding_top);
 
@@ -666,7 +660,8 @@
         ////////////////////////////////////////////////////////////////
         function constructEditor() {
 
-            var editor;
+            var editor,
+                isDrawing;
 
             function render(g, relative_width, relative_height) {
 
@@ -691,7 +686,7 @@
             editor.padding_left = 4;
             editor.padding_top = 4;
 
-            keyDownHandler.registerListener(editor, addLetterA, 65)
+            keyDownHandler.registerListener(editor, addLetterA, 65);
 
             return editor;
 
@@ -761,7 +756,7 @@
                 }
 
                 keySpecificListeners = specificListenersOf[keyboardEvent.keyCode];
-                
+
                 for (index in keySpecificListeners) {
 
                     entry = keySpecificListeners[index];
@@ -774,12 +769,8 @@
 
             function registerListener(display_component, callback_function, key) {
 
-                if (!isFunction(callback_function)) {
-
-                    throw new Error("callback function is not a function");
-
-                }
-
+                onlyProceedIf(callback_function, isFunction);
+                
                 if (isUndefined(key)) {
 
                     generalKeyDownListeners[display_component.id] = callback_function;
@@ -848,7 +839,94 @@
 
             return keyDownHandler;
 
-        }())
+        }());
+
+        eventDispatcher = (function constructEventDispatcher() {
+
+            var eventDispatcher,
+                listening_to,
+                total_listeners_of,
+                registerable_events;
+
+            function handleEvent() {
+
+                for (index in callback_functions) {
+
+                    callback_function = callback_functions[index];
+
+                    onlyProceedIf(callback_function, isDefined);
+
+                    attempt(callback_function);
+
+                }
+
+            }
+
+            function registerListener(event_name) {
+
+                var registerable_event;
+
+                registerable_event = registerable_events[event_name];
+
+                onlyProceedIf(registerable_event, isDefined);
+
+
+
+            }
+
+            function unRegisterListener(display_component, event_name) {
+
+                var registerable_event;
+
+                registerable_event = registerable_events[event_name];
+
+                onlyProceedIf(registerable_event, isDefined);
+
+
+
+            }
+
+            function validateReasonToListen() {
+
+                var totalListeners,
+                    registerable_event;
+
+                for (index in registerable_events) {
+
+                    registerable_event = registerable_events[index];
+
+                    onlyProceedIf(registerable_event, isDefined);
+
+                    if (total_listeners_of[registerable_event] > 0 && !listening_to[registerable_event]) {
+
+                        document.addEventListener(registerable_event, handleEvent);
+
+                        listening_to[registerable_event] = true;
+
+                    } else if (total_listeners_of[registerable_event] < 1 && listening_to[registerable_event]) {
+
+                        document.removeEventListener(registerable_event, handleEvent);
+
+                        listening_to[registerable_event] = false;
+
+                    }
+
+                }
+
+            }
+
+            eventDispatcher = {};
+
+            listening_to = {};
+            total_listeners_of = {};
+
+
+            eventDispatcher.registerListener = registerListener;
+            eventDispatcher.unRegisterListener = unRegisterListener;
+
+            return eventDispatcher;
+
+        }());
 
         // Local upvalues (for speed?)
         mathCeil = Math.ceil;
