@@ -665,7 +665,6 @@
 
             function render(g, relative_width, relative_height) {
 
-
                 g.setColor(0.05, 0.05, 0.05, 1);
 
                 g.drawRect(editor.x, editor.y, relative_width, relative_height);
@@ -846,14 +845,14 @@
             var eventDispatcher,
                 listening_to,
                 total_listeners_of,
-                registerable_events;
+                registerable_events,
+                callback_functions_for;
 
             function handleEvent() {
 
-                for (index in callback_functions) {
+                for (registerable_event in callback_functions_for) {
 
-                    callback_function = callback_functions[index];
-
+                    callback_function = callback_functions_for[registerable_event];
                     onlyProceedIf(callback_function, isDefined);
 
                     attempt(callback_function);
@@ -862,27 +861,27 @@
 
             }
 
-            function registerListener(event_name) {
+            function registerListener(event_name, callback_function) {
 
                 var registerable_event;
 
                 registerable_event = registerable_events[event_name];
-
                 onlyProceedIf(registerable_event, isDefined);
 
-
+                callback_function = callback_functions_for[registerable_event];
+                onlyProceedIf(callback_function, isDefined);
 
             }
 
-            function unRegisterListener(display_component, event_name) {
+            function unRegisterListener(event_name, callback_function) {
 
                 var registerable_event;
 
                 registerable_event = registerable_events[event_name];
-
                 onlyProceedIf(registerable_event, isDefined);
 
-
+                callback_function = callback_functions_for[registerable_event];
+                onlyProceedIf(callback_function, isDefined);
 
             }
 
@@ -897,6 +896,7 @@
 
                     onlyProceedIf(registerable_event, isDefined);
 
+                    // #NOTE: Michael was able to convince me that "listening_to" was redundant, which later turned out not to be the case. So: The reason why I have the extra check is because we can have multiple components registering for an event listener while we are already listening so there'd be no need to register again.
                     if (total_listeners_of[registerable_event] > 0 && !listening_to[registerable_event]) {
 
                         document.addEventListener(registerable_event, handleEvent);
@@ -919,7 +919,6 @@
 
             listening_to = {};
             total_listeners_of = {};
-
 
             eventDispatcher.registerListener = registerListener;
             eventDispatcher.unRegisterListener = unRegisterListener;
