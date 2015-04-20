@@ -110,9 +110,9 @@
 
         }
 
-        ////////////////////////////////////////////////////////////////
-        // CLASS FORMATIZER
-        ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// CLASS formatizer
+////////////////////////////////////////////////////////////////
         var formatizer = (function constructFormatizer() {
 
             "use strict";
@@ -237,9 +237,9 @@
 
         }());
 
-        ////////////////////////////////////////////////////////////////
-        // CLASS DISPLAY
-        ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// CLASS display
+////////////////////////////////////////////////////////////////
         function constructDisplay() {
 
             // variable declarations
@@ -260,59 +260,6 @@
                 g.fillRect(x, y, width, height);
 
             }
-
-            // function drawPixels(g, pixel_list) {
-
-            //     var pixel;
-
-            //     for (pixel in pixel_list) {
-
-            //         drawRect(g, pixel.x, pixel.y, 1, 1, pixel.color);
-
-            //     }
-
-            // }
-
-            /*
-                This just prints out a list of lines but could be made smarter in the future by some smart sorts to figure out gaps or clumps of lines that can be drawn within a single path, or even accept curved lines or more than just 2 dimensions.
-            */
-            // function drawLines(g, line_list) {
-
-            //     var old_stroke_style,
-            //         current_key,
-            //         line;
-
-            //     old_stroke_style = g.strokeStyle;
-
-            //     for (current_key in line_list) {
-
-            //         line = line_list[current_key];
-
-            //         if (isUndefined(line)) {
-
-            //             throw new Error("line is undefined");
-
-            //         }
-
-            //         g.strokeStyle = line.color;
-            //         g.beginPath();
-
-            //         g.moveTo(line.start.x, line.start.y);
-
-            //         g.lineTo(line.end.x, line.end.y);
-
-            //         g.lineWidth = line.thickness;
-            //         g.stroke();
-
-            //     }
-
-            //     if (old_stroke_style) {
-
-            //         g.strokeStyle = old_stroke_style;
-
-            //     }
-
-            // }
 
             function drawLine(aX, aY, bX, bY, width) {
 
@@ -515,9 +462,9 @@
 
         }
 
-        ////////////////////////////////////////////////////////////////
-        // CLASS DISPLAY COMPONENT
-        ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// CLASS displayComponent -- #BLOAT_WARNING
+////////////////////////////////////////////////////////////////
         displayComponent = (function constructDisplayComponent() {
 
             var displayComponent,
@@ -570,6 +517,29 @@
 
             }
 
+            function registerRequiredEvents() {
+
+                var registerable_event,
+                    registeredEventHandler;
+
+                for (registerable_event in this.required_events) {
+
+                    eventDispatcher.registerListener(registerable_event, registeredEventHandler);
+
+                }
+
+            }
+
+            function addRequiredEvent(event_name, eventHandler) {
+
+                onlyProceedIf(event_name, eventDispatcher.isRecognisedEvent);
+
+                onlyProceedIf(eventHandler, isFunction);
+
+                this.event_handlers[event_name] = eventHandler;
+
+            }
+
             function createInstance() {
 
                 var newDisplayComponent;
@@ -592,6 +562,8 @@
                 newDisplayComponent.addChild = addChild;
                 newDisplayComponent.registerParent = registerParent;
                 newDisplayComponent.getChildren = getChildren;
+                newDisplayComponent.registerRequiredEvents = registerRequiredEvents;
+                newDisplayComponent.addRequiredEvent = addRequiredEvent;
 
                 return newDisplayComponent;
 
@@ -607,9 +579,9 @@
 
         }());
 
-        ////////////////////////////////////////////////////////////////
-        // CLASS LETTER A
-        ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// CLASS letterUpperCaseA
+////////////////////////////////////////////////////////////////
         function constructLetterUppercaseA() {
 
             var lowercase_a,
@@ -655,9 +627,9 @@
 
         }
 
-        ////////////////////////////////////////////////////////////////
-        // CLASS EDITOR
-        ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// CLASS editor
+////////////////////////////////////////////////////////////////
         function constructEditor() {
 
             var editor,
@@ -685,6 +657,8 @@
             editor.padding_left = 4;
             editor.padding_top = 4;
 
+            // This line should eventually replace the one below it.
+            // editor.addRequiredEvent(eventDispatcher.KEY_A_PRESSED, addLetterA);
             keyDownHandler.registerListener(editor, addLetterA, 65);
 
             return editor;
@@ -725,6 +699,9 @@
 
         }
 
+////////////////////////////////////////////////////////////////
+// SINGLETON keyDownHandler
+////////////////////////////////////////////////////////////////        
         // #TODO: I feel like I can refactor this into a general eventHandler class we can instantiate with different events?
         keyDownHandler = (function constructKeyDownHandler() {
 
@@ -840,6 +817,9 @@
 
         }());
 
+////////////////////////////////////////////////////////////////
+// SINGLETON eventDispatcher
+////////////////////////////////////////////////////////////////
         eventDispatcher = (function constructEventDispatcher() {
 
             var eventDispatcher,
@@ -896,7 +876,7 @@
 
                     onlyProceedIf(registerable_event, isDefined);
 
-                    // #NOTE: Michael was able to convince me that "listening_to" was redundant, which later turned out not to be the case. So: The reason why I have the extra check is because we can have multiple components registering for an event listener while we are already listening so there'd be no need to register again.
+                    // #NOTE: Michael was able to convince me that "listening_to" was redundant, which later turned out not to be the case. So: The reason why I have the extra check is because we can have multiple components registering for an event listener while we are already listening so there'd be no need to register again. While at the same time we can have a validation cycle where went from 0 to more listeners whilst not listening yet, and then we do need to start listening. We have 2 limits because we transition between listening and not listening, and a transition is by definition not instant.
                     if (total_listeners_of[registerable_event] > 0 && !listening_to[registerable_event]) {
 
                         document.addEventListener(registerable_event, handleEvent);
@@ -915,13 +895,34 @@
 
             }
 
+            function isRecognisedEvent(event_name) {
+
+                return isDefined(registerable_events[event_name]);
+
+            }
+
+            function addRegisterableEvent(event_name, event_code) {
+
+                registerable_events[event_name] = registerableEvent.createInstance(event_name, event_code);
+
+                // Not liking this bit much... the code should be in the event object, so linking it here feels like extra work when changing stuff?
+                eventDispatcher[event_code] = event_name;
+
+                // Still need a host and a listener to hook it up to as well as a list of events to hook and a way to link the actual hook to one of our locally mapped registerable events. Perhaps I should do the mapping elsewhere?
+                host_listener
+
+            }
+
             eventDispatcher = {};
 
             listening_to = {};
             total_listeners_of = {};
 
+            eventDispatcher.KEY_A_PRESSED = "keyboard key 'a' was pressed.";
+
             eventDispatcher.registerListener = registerListener;
             eventDispatcher.unRegisterListener = unRegisterListener;
+            eventDispatcher.isRecognisedEvent = isRecognisedEvent;
 
             return eventDispatcher;
 
