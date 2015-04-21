@@ -1,3 +1,7 @@
+/*
+    @TEUN: What I need is a way to merge the way I was able to switch between multiple event listeners to initiate the screen back then in core.js, mixed in with what I have already here when it comes to event dispatching combined with what I wrote in Samual.lua and other addons for components to be able to register what internal events they need. I'm getting the feeling I've written all the three parts that make up the event dispatcher's whole story, but fail to see the bigger picture which is needed to bring them all together.
+*/
+
 (function loader() {
 
     function faultOnError(err) {
@@ -818,9 +822,11 @@
         }());
 
 ////////////////////////////////////////////////////////////////
-// SINGLETON eventDispatcher
+// SINGLETON eventDispatcher -- #CHAOS_WARNING
 ////////////////////////////////////////////////////////////////
         eventDispatcher = (function constructEventDispatcher() {
+
+            // #NOTE: This entire singleton needs to be ignored or thoroughly looked at. I've confused external and internal events all over the place. I doubt this can still be made into a nice code like this without extreme caution!
 
             var eventDispatcher,
                 listening_to,
@@ -828,19 +834,17 @@
                 registerable_events,
                 callback_functions_for;
 
-            function handleEvent() {
+            // [INTERNAL] This is where a recognised local event triggers the registered call backs to be executed.
+            function handleLocalEvent(local_event_name) {
 
-                for (registerable_event in callback_functions_for) {
+                callback_function = callback_functions_for[local_event_name];
+                onlyProceedIf(callback_function, isDefined);
 
-                    callback_function = callback_functions_for[registerable_event];
-                    onlyProceedIf(callback_function, isDefined);
-
-                    attempt(callback_function);
-
-                }
+                attempt(callback_function);
 
             }
 
+            // [DATED] I think this was intended for external use, but not sure.
             function registerListener(event_name, callback_function) {
 
                 var registerable_event;
@@ -853,6 +857,7 @@
 
             }
 
+            // [DATED] I think this was intended for external use, but not sure.
             function unRegisterListener(event_name, callback_function) {
 
                 var registerable_event;
@@ -865,6 +870,7 @@
 
             }
 
+            // [DISPATCHER] This is supposed to control which external listeners were actively being monitored based on internal requests.
             function validateReasonToListen() {
 
                 var totalListeners,
@@ -895,30 +901,75 @@
 
             }
 
+            // [DISPATCHER] This is a quick mock-up of how I think I want to setup/structure the external handeling.
+            function quickTrial() {
+
+                var hostHookingFunction,
+                    host_event_name,
+                    hookToDispatch;
+
+                // This function can be declared somewhere using the editor itself or the administrator interface, which is then stored in local config.
+                function keyUpHandler(keyboardEvent) {
+
+                    function keyAUpHandler() {
+
+                        handleLocalEvent(eventDispatcher.KEY_A_PRESSED);
+
+                    }
+                    // We may just want to map these to handlers specifically instead of using long if-else chains or w/e...
+                    if (keyboardEvent.keyCode == 65) {
+
+                        keyAUpHandler();
+
+                    }
+
+                    handleLocalEvent(eventDispatcher.KEY_PRESSED);
+
+                }
+
+                // Host hooking function    |   Host eventname  |   local hook to dispatch
+                // document.addEventListener(  "keyup",             sendKeyUpMarkerToDispatcher);
+
+                hostHookingFunction = document.addEventListener;
+                host_event_name = "keyup";
+                hookToDispatch = keyUpHandler;
+
+            }
+
+            // [DISPATCHER]? Not sure but I think I wanted this to make sure we're listening to an event that we can actually receive (still).
             function isRecognisedEvent(event_name) {
 
                 return isDefined(registerable_events[event_name]);
 
             }
 
-            function addRegisterableEvent(event_name, event_code) {
+            // [EXTERNAL][DATED] This is part of the CRUD to create external hooks for the dispatcher to work with.
+            // function addRegisterableEvent(event_name, event_code) {
 
-                registerable_events[event_name] = registerableEvent.createInstance(event_name, event_code);
+            //     registerable_events[event_name] = registerableEvent.createInstance(event_name, event_code);
 
-                // Not liking this bit much... the code should be in the event object, so linking it here feels like extra work when changing stuff?
-                eventDispatcher[event_code] = event_name;
+            //     // Not liking this bit much... the event_code should be in the event object, so linking it here feels like extra work when changing stuff?
+            //     eventDispatcher[event_code] = event_name;
 
-                // Still need a host and a listener to hook it up to as well as a list of events to hook and a way to link the actual hook to one of our locally mapped registerable events. Perhaps I should do the mapping elsewhere?
-                host_listener
+            //     // Still need a host and a listener to hook it up to as well as a list of events to hook and a way to link the actual hook to one of our locally mapped registerable events. Perhaps I should do the mapping elsewhere?
+            //     host_listener
 
-            }
+            //     // Hook into the browser event for a keydown followed by a keyup
+            //     browser_event.keydown;
+            //     browser_event.keyup;
+
+            // }
 
             eventDispatcher = {};
 
             listening_to = {};
             total_listeners_of = {};
 
-            eventDispatcher.KEY_A_PRESSED = "keyboard key 'a' was pressed.";
+            // This is the stuff that is supposed to be generated by the functions above which I'm trying to write. This would've been the result after the above functions were being fed the config-files as suggested by Michael and Marc. Lets just do this by hand for now to see if the rest works.
+            eventDispatcher.KEY_A_PRESSED = {
+                name: "keyboard key 'a' was pressed.",
+                code: "KEY_A_PRESSED"
+            };
 
             eventDispatcher.registerListener = registerListener;
             eventDispatcher.unRegisterListener = unRegisterListener;
