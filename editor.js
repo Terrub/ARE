@@ -906,7 +906,8 @@
 
                 var hostHookingFunction,
                     host_event_name,
-                    hookToDispatch;
+                    hookToDispatch,
+                    mouseUpHandlers;
 
                 // This function can be declared somewhere using the editor itself or the administrator interface, which is then stored in local config.
                 function keyUpHandler(keyboardEvent) {
@@ -933,6 +934,25 @@
                 hostHookingFunction = document.addEventListener;
                 host_event_name = "keyup";
                 hookToDispatch = keyUpHandler;
+
+                // Example of mouseUp sub-object
+                mouseUpHandlers = {
+                    1: {
+                        key: "ExmouseUp",
+                        value: "InmouseUp"
+                    }
+                    2: {
+                        key: "mouseUp",
+                        value: "mouseButton1Up"
+                    },
+                    3: {
+                        key: "mouseUp",
+                        value: "mouseButton2Up"
+                    }
+                }
+
+                // I kinda want to be able to do stuff like traverse an object with specific values that returns a single item or a set of items.
+                
 
             }
 
