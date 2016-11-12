@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r5
+
+</title></head><body><script>
+
+    "use strict";
+
+    var ARE;
+
+    if ( localStorage[ "ARE" ] === undefined ) {
+
+        localStorage[ "ARE" ] = {
+
+            "set": function ( k, v ) {
+
+                ARE[ k ] = v;
+
+            },
+
+            "get": function ( k ) {
+
+                return ARE[ k ];
+
+            },
+
+            "identification": "ARE",
+
+            "save to local storage": function () {
+
+                localStorage[ ARE[ "identification" ] ] = ARE;
+
+            },
+
+            "load from local storage": function () {
+
+                ARE = localStorage[ ARE[ "identification" ] ];
+
+            }
+
+        }
+
+    }
+
+    ARE = localStorage[ "ARE" ];
+
+</script></body></html>

@@ -1,0 +1,19 @@
+Like my AI model, the editor runs on impulses as well
+
+the user sends the impulses
+
+these impulses are sent to the core using a set of drivers.
+
+What I need to create now is stubs that allow the outside to send impulses to the core as well as stubs that allow the outside of knowing the results of the core's processing.
+
+I know, that for the editor I will need to know when the user presses buttons and moves a mouse and such as they are required to determine internal representation of position within the core logic.
+
+So testing setup should be pretty easy. I can reuse the "Fault on error" logic I've already built on several occasions and I can create stubs for all required I/O and test the inputs and outputs already.
+
+I want to be able to use the mouse to define/design symbols that are bound to keypresses or other signals so that they can be replicated. The standard reading logic and rulesset of left to right and top to bottom should be defined as well but I don't know exactly where or when yet. If I can set this up neatly I can reuse most of the I/O logic to integrate different languages and environments. Perhaps even have a simple atom integration as suggested by B.Peachey.
+
+possible problems.
+Queueing is a bitch. I am actually considering not allowing for queueing at all. If signals are sent that cannot be processed, they should possibly be dropped straight away, or we need to find a way to have the queue last effectively indefinitly otherwise there will stll be a case of purging/spilling once the queue is so full that it can store or register no more entries which is effectively the same result as not having a queue at all anymore, especially if the default usage will clog up the queue fast enough.
+
+The core shouldn't use ANY outside inferred logic or methodology. No Math abstract or String abstract classes or w/e. We inject dependencies or define these by scope or something.
+If someone can write a different language equivalent for the core input, then it should be able to operate without having to change the core logic. The two different languages just send a similar signal to the core using their own respective methods.

@@ -925,7 +925,7 @@ function invokeCreateChildren(parent_list) {
 // ------------------------------------------------------------------------------------------------
     function loadLocalStorageIntoLocalMemory() {
 
-        /*var local_filenames;
+        var local_filenames;
 
         function addFileDataToLocalMemory(filepath, index, current_iteration_list) {
 
@@ -963,7 +963,7 @@ function invokeCreateChildren(parent_list) {
 
         }
 
-        local_filenames.forEach(addFileDataToLocalMemory);*/
+        local_filenames.forEach(addFileDataToLocalMemory);
 
         localMemory.addFileData(localstorage["ARE_file"]);
 

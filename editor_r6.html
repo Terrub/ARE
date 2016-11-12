@@ -1,0 +1,142 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r6
+
+</title></head><body><script>
+
+"use strict";
+
+var ARE;
+
+ARE = {};
+
+ARE["token end of part"] = ",";
+
+ARE["token end of line"] = "\n";
+
+// This is the javascript version of our parse logic, for now.
+ARE["parse"] = function () {
+
+    ARE["convert input to lines"]();
+
+    ARE["execute each line"]();
+
+};
+
+ARE["convert input to lines"] = function () {
+
+    var line_break,
+        input,
+        normalised_input,
+        lines;
+
+    // Our definition of an "end of line"-token.
+    line_break = ARE["token end of line"];
+
+    // Get the input from the read head.
+    input = ARE["input"];
+
+    // Pull out all the known "Return carriage" and "New line" characters from our input and replace it with our definition of an "end of line"-token.
+    normalised_input = input.replace(/\r?\n+/g, line_break);
+
+    // This is where we finally get our whole line list.
+    lines = normalised_input.split(line_break);
+
+    ARE["lines"] = lines;
+
+};
+
+ARE["execute each line"] = function () {
+
+    var lines,
+        parts,
+        command,
+        parameters;
+
+    lines = ARE["lines"];
+
+    lines.forEach(
+        function ( p_line, p_line_index, p_lines ) {
+
+            parts = p_line.split( ARE["token end of part"] );
+
+            command = parts.shift();
+
+            parameters = parts;
+
+            ARE[ command ].apply( null, parameters );
+
+        }
+    );
+
+};
+
+ARE["set"] = function ( p_key, p_value ) {
+
+    var key,
+        value;
+
+    key = eval( p_key );
+
+    value = eval( p_value );
+
+    ARE[ key ] = value;
+
+};
+
+document.addEventListener(
+    "keydown",
+    function ( event ) {
+
+        ARE["key down handler"]( event )
+
+    }
+);
+
+ARE["key down handler"] = function ( event ) {
+
+    if ( event.keyIdentifier === "U+0053" && event.ctrlKey ) {
+
+        event.preventDefault();
+
+        ARE["input"] = ARE["user input box"].value;
+
+        ARE["parse"]();
+
+    }
+
+};
+
+ARE["input"] = 'set,"user input box",document.createElement("textarea");';
+
+ARE["parse"]();
+
+document.body.appendChild( ARE["user input box"] );
+
+ARE["types function"] = "function";
+
+function constructFunctionFromDescription( p_function_description ) {
+
+    ARE( 'stop if',
+        ARE( 'compare',
+            p_function_description.name,
+            undefined
+        )
+    );
+
+    // We're building a new function, so we type it for now.
+    ARE( 'set',
+        p_function_description.name + ' ' + "type",
+        ARE( 'get',
+            'type function'
+        )
+    )
+
+    ARE( 'set',
+        p_function_description.name,
+        p_function_description
+    );
+
+}
+
+</script></body></html>

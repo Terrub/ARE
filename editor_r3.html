@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r3
+
+</title></head><body><script>
+
+    "use strict";
+
+    var base;
+
+    // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+    base = {
+        "local storage": localStorage,
+        "code spine": 'base[ "editor identification" ] = "ARE_r3";\n\n            // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --\n\n            base[ "test active code" ] = function () {\n\n                //#TODO: This requires tests.\n\n            };\n\n            // -- --\n\n            base[ "save active code" ] = function () {\n\n                base[ "proposed code" ] = base[ "input area" ].value;\n\n                // Temp mock to keep an eye on local storage\n\n                base[ "debug mock storage" ].innerHTML = base[ "proposed code" ];\n\n                base[ "local storage" ][ base[ "editor identification" ] ] = base[ "proposed code" ];\n\n            };\n\n            // -- --\n\n            base[ "execute proposed code" ] = function () {\n\n                // Parse through the proposed code.\n\n                console.log( base[ "proposed code" ] );\n\n            };\n\n            // -- --\n\n            base[ "construct" ] = function ( p_component_identification, p_component_tag_name ) {\n\n                base[ p_component_identification ] = document.createElement( p_component_tag_name );\n\n                document.body.appendChild( base[ p_component_identification ] );\n\n            }\n\n            // -- --\n\n            base[ "load local storage" ] = function () {\n\n                if ( base[ "local storage" ][ base[ "editor identification" ] ] !== undefined ) {\n\n                    base[ "input area" ].value = base[ "local storage" ][ base[ "editor identification" ] ];\n\n                    base[ "initialised" ] = true;\n\n                }\n\n                if ( ! base[ "initialised" ] ) {\n\n                    base[ "input area" ].value = base[ "code spine" ];\n\n                }\n\n            }\n\n            // -- --\n\n            base[ "handle key down" ] = function ( keyboard_event_key_down ) {\n\n                if ( keyboard_event_key_down.keyIdentifier === "U+0053" && keyboard_event_key_down.ctrlKey ) {\n\n                    keyboard_event_key_down.preventDefault();\n\n                    base[ "test active code" ]();\n\n                    base[ "save active code" ]();\n\n                    base[ "execute proposed code" ]();\n\n                }\n\n            }\n\n            // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --\n\n            base[ "construct" ]( "input area", "textarea" );\n\n            base[ "construct" ]( "debug mock storage", "pre" );\n\n            base[ "load local storage" ]();\n\n            base[ "save active code" ]();\n\n            base[ "execute proposed code" ]();'
+    };
+
+    eval( base[ "code spine" ] );
+    
+    document.addEventListener( "keydown", base[ "handle key down" ] );
+
+</script></body></html>

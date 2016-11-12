@@ -1,0 +1,144 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r10
+
+</title></head><body><script>
+
+// ----------------------------------------------------------------
+// Local stuff. These are vars, consts and funcs which the core needs.
+// ----------------------------------------------------------------
+
+    function get( t, k ) {
+
+        return t[ k ];
+
+    }
+
+    function set( t, k, v ) {
+
+        t[ k ] = v;
+
+    }
+
+// ----------------------------------------------------------------
+// Definitions
+// ----------------------------------------------------------------
+
+    var core;
+
+    core = {};
+
+    function Define( name, protoFunc, dependencies ) {
+
+        if ( typeof dependencies !== "undefined" ) {
+
+            
+
+        }
+
+        set(
+            get( core, "current_scope" ),
+            name,
+            protoFunc
+        );
+
+    }
+
+// --------
+    
+    Define(
+        "isUndefined",
+        function Proto_isUndefined( value ) {
+
+            return ( typeof value === "undefined" );
+
+        }
+    );
+
+// --------
+    
+    Define(
+        "prt",
+        function Proto_prt() {
+
+            console.log.apply( console, arguments );
+
+        }
+    );
+
+// --------
+
+    Define(
+        "reportError",
+        function Proto_reportError( err ) {
+
+            throw new Error( err );
+
+        }
+    );
+
+// --------
+
+    Define(
+        "faultOnError",
+        function Proto_faultOnError( err ) {
+
+            var err_body = document.createElement( "body" ),
+                err_container = document.createElement( "pre" ),
+                err_message = document.createTextNode( err );
+
+            err_body.style.backgroundColor = "#c33";
+            err_body.style.color = "#fff";
+
+            err_container.appendChild( err_message );
+
+            err_body.appendChild( err_container );
+
+            document.body = err_body;
+
+            reportError( err );
+
+        },
+        [
+            "setBody",
+            "reportError"
+        ]
+    );
+
+    function Define_faultOnError( setBody, reportError ) {
+
+        
+
+        return Proto_faultOnError;
+
+    }
+
+    set( core, "faultOnError", Define_faultOnError( setBody, get( core, "reportError" ) ) );
+
+// --------
+
+    function Define_attempt( faultOnError ) {
+
+        function Proto_attempt( toAttempt, args ) {
+
+            try {
+
+                return toAttempt.apply( null, args );
+
+            } catch ( err ) {
+
+                faultOnError( err );
+
+            }
+
+        }
+
+        return Proto_attempt;
+
+    }
+
+    set( core, "attempt", Define_attempt( get( core, "faultOnError" ) ) );
+
+// --------
+
+</script></body></html>

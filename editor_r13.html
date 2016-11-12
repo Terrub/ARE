@@ -1,0 +1,314 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r13
+
+</title></head><body><script>
+
+// ----------------------------------------------------------------
+// Local stuff. These are vars, consts and funcs which the core needs.
+// ----------------------------------------------------------------
+
+    function get( t, k ) {
+
+        return t[ k ];
+
+    }
+
+    function set( t, k, v ) {
+
+        t[ k ] = v;
+
+    }
+
+// ----------------------------------------------------------------
+// Definitions
+// ----------------------------------------------------------------
+
+    var core;
+
+    core = {};
+
+// --------
+
+    function Define_get() {
+
+        function Proto_get( key ) {
+
+            // I use core here from the global scope, instead of passing it along, for the time being. It would create caching in ways I cannot forsee how it might affect the rest of the system... But we could pass core along and perhaps use that as a method to recover from a last failure?
+            return get( core, key );
+
+        }
+
+        return Proto_get;
+
+    }
+
+    
+    set(
+        core,
+        "get",
+        Define_get()
+    );
+    
+// --------
+
+    function Define_set() {
+
+        function Proto_set( key, value ) {
+
+            set( core, key, value );
+
+        }
+
+        return Proto_set;
+
+    }
+
+    set(
+        core,
+        "set",
+        Define_set()
+    );
+
+// --------
+    
+    function Define_isUndefined() {
+
+        function Proto_isUndefined( value ) {
+
+            return ( typeof value === "undefined" );
+
+        }
+
+        return Proto_isUndefined;
+
+    }
+
+    core.set(
+        "isUndefined",
+        Define_isUndefined()
+    );
+
+// --------
+    
+    function Define_log() {
+
+        function Proto_log() {
+
+            console.log.apply( console, arguments );
+
+        }
+
+        return Proto_log;
+
+    }
+
+    core.set(
+        "log",
+        Define_log()
+    );
+
+// --------
+
+    function Define_reportError() {
+
+        function Proto_reportError( err ) {
+
+            core.set( "error_state", true );
+
+            throw new Error( err );
+
+        }
+
+        return Proto_reportError;
+
+    }
+
+    core.set(
+        "reportError",
+        Define_reportError()
+    );
+
+// --------
+
+    function Define_constructErrorBody() {
+
+        function Proto_constructErrorBody() {
+
+            var err_body = document.createElement( "body" );
+
+            err_body.style.backgroundColor = "#c33";
+            err_body.style.color = "#fff";
+
+            core.set( "error_body", err_body );
+
+        }
+
+        return Proto_constructErrorBody;
+
+    }
+
+    core.set(
+        "constructErrorBody",
+        Define_constructErrorBody()
+    );
+
+// --------
+
+    function Define_faultOnError( constructErrorBody, reportError ) {
+
+        function Proto_faultOnError( err ) {
+
+            var err_body,
+                err_container,
+                err_message;
+
+            if ( ! core.get( "error_body_is_contructed" ) ) {
+
+                constructErrorBody();
+
+                core.set( "error_body_is_contructed", true );
+
+            }
+            
+            err_body = core.get( "error_body" );
+
+            err_container = document.createElement( "pre" );
+
+            err_message = document.createTextNode( err );
+
+            err_container.appendChild( err_message );
+
+            err_body.appendChild( err_container );
+
+            document.body = err_body;
+
+            reportError( err );
+
+        }
+
+        return Proto_faultOnError;
+
+    }
+
+    core.set(
+        "faultOnError",
+        Define_faultOnError(
+            core.get( "constructErrorBody" ),
+            core.get( "reportError" )
+        )
+    );
+
+// --------
+
+    function Define_rememberCurrentState() {
+
+        function Proto_rememberCurrentState() {
+
+            core.set( "lastStableBody", document.body );
+
+        }
+
+        return Proto_rememberCurrentState;
+
+    }
+
+    core.set(
+        "rememberCurrentState",
+        Define_rememberCurrentState()
+    );
+
+// --------
+
+    function Define_errorState() {
+
+        function Proto_errorState() {
+
+            return core.get( "error_state" );
+
+        }
+
+        return Proto_errorState;
+
+    }
+
+    core.set(
+        "errorState",
+        Define_errorState()
+    );
+
+// --------
+
+    function Define_attempt( errorState, faultOnError, rememberCurrentState ) {
+
+        function Proto_attempt( toAttempt, args ) {
+
+            // Do a check here if we're not already in an error state? Would make some sense...
+            // ---- Logic being that if the current state is already garbled, we shouldn't probably keep trying new stuff. Recover first, then try.
+            if ( errorState() ) {
+
+                //#NOTE: Use my formatizer to contruct these messages? like: formatizer( "{@1:error} - {@2:suggestion}", ERR_CORE_UNSTABLE, "core.recoverFromError" )
+                faultOnError( "Core is unstable, no further attempts can be made at this point.\nTry 'core.recoverFromError()'" );
+
+                return;
+
+            }
+
+            // ----
+
+            rememberCurrentState();
+
+            try {
+
+                return toAttempt.apply( null, args );
+
+            } catch ( err ) {
+
+                faultOnError( err );
+
+            }
+
+        }
+
+        return Proto_attempt;
+
+    }
+
+    core.set(
+        "attempt",
+        Define_attempt(
+            core.get( "errorState" ),
+            core.get( "faultOnError" ),
+            core.get( "rememberCurrentState" )
+        )
+    );
+
+// --------
+
+    function Define_recoverFromError( constructErrorBody, getLastStableState ) {
+
+        function Proto_recoverFromError() {
+
+            constructErrorBody();
+
+            document.body = core.get( "lastStableBody" );
+
+            core.set( "error_state", false );
+
+        }
+
+        return Proto_recoverFromError;
+
+    }
+
+    core.set(
+        "recoverFromError",
+        Define_recoverFromError(
+            core.get( "constructErrorBody" ),
+            core.get( "getLastStableState" )
+        )
+    );
+
+// --------
+
+</script></body></html>

@@ -19,7 +19,7 @@
 
 ---------------------------------------------------------------- */
 
-(function loadBootupScript() {
+( function loadBootupScript() {
 
     "use strict";
 
@@ -33,47 +33,47 @@
 
         var core;
 
-        function isUndefined(value) {
+        function isUndefined( value ) {
 
-            return (typeof value === "undefined");
-
-        }
-
-        function isDefined(value) {
-
-            return (!isUndefined(value));
+            return ( typeof value === "undefined" );
 
         }
 
-        function isString(value) {
+        function isDefined( value ) {
 
-            return (typeof value === "string");
-
-        }
-
-        function isArray(value) {
-
-            return (Array.isArray(value));
+            return ( ! isUndefined( value ) );
 
         }
 
-        function attempt(proposedFunction, args) {
+        function isString( value ) {
+
+            return ( typeof value === "string" );
+
+        }
+
+        function isArray( value ) {
+
+            return ( Array.isArray( value ) );
+
+        }
+
+        function attempt( proposedFunction, args ) {
 
             try {
 
-                return proposedFunction.apply(null, args);
+                return proposedFunction.apply( null, args );
 
-            } catch (err) {
+            } catch ( err ) {
 
-                faultOnError(err);
+                faultOnError( err );
 
             }
 
         }
 
-        function faultOnError(err) {
+        function faultOnError( err ) {
 
-            var errBody = document.createElement("body");
+            var errBody = document.createElement( "body" );
 
             errBody.style.backgroundColor = "#cc3333";
             errBody.style.color = "#ffffff";
@@ -82,18 +82,18 @@
 
             document.body = errBody;
 
-            throw err;
+            throw new Error( err );
 
         }
 
-        function mergeOneObjectIntoTheOther(one, the_other) {
+        function mergeOneObjectIntoTheOther( one, the_other ) {
 
             // #TODO: look into checking whether Object.assign is available and use that instead? 
             // #NOTE: Use pointers for changing functions. I prefer that over excessive if statements 
 
             var object_keys;
 
-            function addKeyToTheOtherObject(object_key, index, current_list) {
+            function addKeyToTheOtherObject( object_key, index, current_list ) {
 
                 // if (isUndefined(the_other[object_key])) { 
 
@@ -101,25 +101,25 @@
 
                 // } 
 
-                the_other[object_key] = one[object_key];
+                the_other[ object_key ] = one[ object_key ];
 
             }
 
-            if (isUndefined(one)) {
+            if ( isUndefined( one ) ) {
 
-                faultOnError("object one is undefined");
-
-            }
-
-            if (isUndefined(the_other)) {
-
-                faultOnError("object the_other is undefined");
+                faultOnError( "object one is undefined" );
 
             }
 
-            object_keys = Object.keys(one);
+            if ( isUndefined( the_other ) ) {
 
-            object_keys.forEach(addKeyToTheOtherObject);
+                faultOnError( "object the_other is undefined" );
+
+            }
+
+            object_keys = Object.keys( one );
+
+            object_keys.forEach( addKeyToTheOtherObject );
 
             return the_other;
 
@@ -142,7 +142,7 @@
 // ------------------------------------------------------------------------------------------------ 
 // [CLASS] Display 
 // ------------------------------------------------------------------------------------------------ 
-    function ConstructDisplayIn(parent) {
+    function ConstructDisplayIn( parent ) {
 
         // variable declarations 
         var display,
@@ -165,17 +165,17 @@
 
         function validateRenderList() {
 
-            function addChildToRenderList(displayElement, index, current_iteration_list) {
+            function addChildToRenderList( displayElement, index, current_iteration_list ) {
 
-                if (render_list.indexOf(displayElement) < 0) {
+                if (render_list.indexOf( displayElement ) < 0) {
 
-                    render_list.push(displayElement);
+                    render_list.push( displayElement );
 
                 }
 
             }
 
-            display_element_tree.forEach(addChildToRenderList);
+            display_element_tree.forEach( addChildToRenderList );
 
         }
 
@@ -191,14 +191,14 @@
                 isUndefined,
                 displayElement;
 
-            function addChildToNextIteration(displayElement, index, current_iteration_list) {
+            function addChildToNextIteration( displayElement, index, current_iteration_list ) {
 
-                next_render_list.push(displayElement);
+                next_render_list.push( displayElement );
 
             }
 
             // Early exit for performance reasons? 
-            if (render_list.length > 0) {
+            if ( render_list.length > 0 ) {
 
                 // console.log("Rendering.")
 
@@ -210,19 +210,19 @@
                 local_width = canvas.width;
                 local_height = canvas.height;
 
-                while (render_list.length > 0) {
+                while ( render_list.length > 0 ) {
 
                     next_render_list = [];
 
-                    while (render_list.length > 0) {
+                    while ( render_list.length > 0 ) {
 
                         displayElement = render_list.shift();
 
-                        displayElement.render(graphicsLib, local_x, local_y, local_width, local_height);
+                        displayElement.render( graphicsLib, local_x, local_y, local_width, local_height );
 
                         children = displayElement.getChildren();
 
-                        children.forEach(addChildToNextIteration);
+                        children.forEach( addChildToNextIteration );
 
                         local_x += displayElement.contentOffsetLeft;
                         local_y += displayElement.contentOffsetTop;
@@ -241,25 +241,25 @@
 
         }
 
-        function validateEveryDisplayElement(display_element_tree) {
+        function validateEveryDisplayElement( display_element_tree ) {
 
             var current_layer_of_elements,
                 next_layer_of_elements,
                 children;
 
-            function validateDisplayElementPropertiesAndCheckForChildren(displayElement, index, display_element_tree) {
+            function validateDisplayElementPropertiesAndCheckForChildren( displayElement, index, display_element_tree ) {
 
                 displayElement.validateProperties();
 
                 children = displayElement.getChildren();
 
-                children.forEach(addChildToNextIteration);
+                children.forEach( addChildToNextIteration );
 
             }
 
-            function addChildToNextIteration(displayElement, index, current_iteration_list) {
+            function addChildToNextIteration( displayElement, index, current_iteration_list ) {
 
-                next_layer_of_elements.push(displayElement);
+                next_layer_of_elements.push( displayElement );
 
             }
 
@@ -267,11 +267,11 @@
 
             // console.log("Validating.")
 
-            while (current_layer_of_elements.length > 0) {
+            while ( current_layer_of_elements.length > 0 ) {
 
                 next_layer_of_elements = [];
 
-                current_layer_of_elements.forEach(validateDisplayElementPropertiesAndCheckForChildren);
+                current_layer_of_elements.forEach( validateDisplayElementPropertiesAndCheckForChildren );
 
                 current_layer_of_elements = next_layer_of_elements;
 
@@ -287,7 +287,7 @@
 
         }
 
-        function newElement(blueprint) {
+        function newElement( blueprint ) {
 
             var display_element,
                 parent_element,
@@ -303,17 +303,17 @@
 
             }
 
-            function addChild(element) {
+            function addChild( element ) {
 
-                if (core.isUndefined(element) || !element.isDisplayElement()) {
+                if ( core.isUndefined( element ) || ! element.isDisplayElement() ) {
 
-                    core.faultOnError("element must be valid displayElement");
+                    core.faultOnError( "element must be valid displayElement" );
 
                 }
 
-                children.push(element);
+                children.push( element );
 
-                element.setParent(this);
+                element.setParent( this );
 
             }
 
@@ -446,7 +446,7 @@
 
         }
 
-        // This looks a lot like displayElement.addChild 
+        // This looks a lot like displayElement.addChild
         function addElementToDisplay(displayElement) {
 
             display_element_tree.push(displayElement);
@@ -543,7 +543,8 @@
             quotes,
             captors,
             numerical_operators,
-            slashes;
+            slashes,
+            single_space;
 
         // ----------------------------------------------------------------
         // -- Function declarations -- 
@@ -576,7 +577,7 @@
                 current_line_height = (linenumber * (text_size + margins));
 
                 // I need to tokenise the text so I can have some impact on the looks and feels of the letters n stuff. 
-                graphicsLib.fillText(getLineAtLinenumber(linenumber), 4, current_line_height);
+                graphicsLib.fillText(getLineAt(linenumber), 4, current_line_height);
                 
             }
 
@@ -658,7 +659,7 @@
 
         }
 
-        function getLineAtLinenumber(linenumber) {
+        function getLineAt(linenumber) {
 
             return code_lines[linenumber - 1];
 
@@ -666,7 +667,7 @@
 
         function getLineAtCaret() {
 
-            return getLineAtLinenumber(caret.current_line);
+            return getLineAt(caret.current_line);
 
         }
 
@@ -674,9 +675,11 @@
 
             code_lines[proposed_line_number - 1] = proposed_code;
 
+            display.invalidateProperties();
+
         }
 
-        function addTextRightOfCaret(character) {
+        function addSymbolsRightOfCaret(character) {
 
             var line,
                 left_part,
@@ -697,7 +700,6 @@
 
             moveCaretColumn(1);
 
-            display.invalidateProperties();
             display.invalidateRendering();
 
         }
@@ -750,7 +752,7 @@
 
                 moveCaretColumn(line.length + 1);
 
-                addTextRightOfCaret(right_part);
+                addSymbolsRightOfCaret(right_part);
 
             } else {
 
@@ -810,7 +812,7 @@
                 keyboard_event.preventDefault();
 
                 // Space bar pressed.
-                addTextRightOfCaret(" ");
+                addSymbolsRightOfCaret(single_space);
 
             } else if (keyboard_event.keyCode === 35) {
 
@@ -879,7 +881,7 @@
 
             if (isRegisteredCharacter(character)) {
 
-                addTextRightOfCaret(character);
+                addSymbolsRightOfCaret(character);
 
             }
 
@@ -1019,8 +1021,9 @@
         special_characters = "!@#$%&_|;:";
         quotes = "\'\"";
         captors = "()\\[\\]{}";
-        numerical_operators = "+-/*%^";
+        numerical_operators = "+\-/*%^";
         slashes = "\\\\/";
+        single_space = " ";
 
         registered_characters = new RegExp("["
             + lower_case_letters

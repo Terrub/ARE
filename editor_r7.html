@@ -1,0 +1,445 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r7
+
+</title></head><body><script>
+
+"use strict";
+
+var memory = {
+        "default entry sibling value": null,
+        "default entry uses value": 0
+    },
+
+    prt = ( function createPrt() {
+
+        function proto_prt() {
+
+            console.log.apply( console, arguments );
+
+        }
+
+        return proto_prt;
+
+    }() ),
+
+    assert = ( function createAssert() {
+
+        var num_asserts = 1,
+            assert_args = [
+                "Assert [",
+                num_asserts,
+                "] - ",
+                ""
+            ];
+
+        function proto_assert() {
+
+            assert_args[ 1 ] = num_asserts;
+
+            if ( typeof arguments[ 1 ] !== "undefined" ) {
+
+                assert_args[ 3 ] = arguments[ 1 ];
+
+            } else {
+
+                assert_args[ 3 ] = "No assert message";
+
+            }
+
+            prt.apply( null, assert_args );
+
+            console.assert.apply( console, arguments );
+
+            num_asserts += 1;
+
+        }
+
+        return proto_assert;
+
+    }() );
+
+// --------
+
+function createEntryWith( p_key ) {
+
+    "use strict";
+
+    var entry;
+
+    entry = {
+        key: p_key,
+        children: [],
+        uses: memory[ "default entry uses value" ],
+        sibling: memory[ "default entry sibling value" ]
+        
+    };
+
+    return entry;
+
+}
+
+// --------
+
+function getEntryFromMemoryWith( p_key ) {
+
+    "use strict";
+
+    var i,
+        n,
+        entry;
+
+    i = 0;
+
+    n = memory.length;
+
+    for ( i; i < n; i += 1 ) {
+
+        entry = memory[ i ];
+
+        if ( entry.key === p_key ) {
+
+            return entry;
+
+        }
+
+    }
+
+}
+
+// --------
+
+function incrementUseCountFor( p_entry ) {
+
+    "use strict";
+
+    p_entry.uses += 1;
+
+}
+
+// --------
+
+function getChildFrom( p_entry ) {
+
+    "use strict";
+
+    return p_entry.children[ 0 ];
+
+}
+
+// --------
+
+function getSiblingFrom( p_entry ) {
+
+    "use strict";
+
+    return p_entry.sibling;
+
+}
+
+// --------
+
+function addChildTo( p_entry, p_child ) {
+
+    "use strict";
+
+    p_entry.children[ p_entry.children.length ] = p_child;
+
+}
+
+// --------
+
+function supplementMemoryWith( p_entry ) {
+
+    "use strict";
+
+    memory[ memory.length ] = p_entry;
+
+}
+
+// --------
+
+function rearrange( p_entry, p_compareEntryUsage ) {
+
+    "use strict";
+
+    p_entry.children.sort( p_compareEntryUsage );
+
+    resetSiblingsFor( p_entry );
+
+}
+
+// --------
+
+function resetSiblingsFor( p_entry ) {
+
+    "use strict";
+
+    var n,
+        last_entry;
+
+    n = p_entry.children.length;
+
+    last_entry = memory[ "default entry sibling value" ];
+
+    while ( n ) {
+
+        n -= 1;
+
+        p_entry.children[ n ].sibling = last_entry;
+
+        last_entry = p_entry.children[ n ];
+
+    }
+
+}
+
+// --------
+
+function compareEntryUsage( p_entry_primus, p_entry_secundus ) {
+
+    "use strict";
+
+    return p_entry_primus.uses - p_entry_secundus.uses;
+
+}
+
+// --------
+
+function doTests() {
+
+    assert(
+        ( typeof prt === "function" ),
+        "prt is defined and a function"
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var test_entry;
+
+            test_entry = createEntryWith( "test" );
+
+            return ( "test" === test_entry.key );
+
+        }() ),
+        'createEntryWith( "test" ) returns an entry with the provided key.'
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var test_entry;
+
+            test_entry = createEntryWith( "test" );
+
+            return ( Array.isArray( test_entry.children ) && test_entry.children.length === 0 );
+
+        }() ),
+        'createEntryWith returns an entry with property "children" containing an array with length 0.'
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var test_entry;
+
+            test_entry = createEntryWith( "test" );
+
+            return ( test_entry.uses === memory[ "default entry uses value" ] );
+
+        }() ),
+        'createEntryWith returns an entry with property "uses" containing the number 0.'
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var test_entry;
+
+            test_entry = createEntryWith( "test" );
+
+            return ( test_entry.sibling === memory[ "default entry sibling value" ] );
+
+        }() ),
+        'createEntryWith returns an entry with property "sibling" containing NULL.'
+    );
+
+    assert(
+        ( function () {
+
+            var return_value,
+                expected_sibling,
+                entry;
+
+            expected_sibling = "entry's sibling";
+
+            entry = {
+                sibling: expected_sibling
+            }
+
+            return_value = getSiblingFrom( entry );
+
+            return ( return_value === expected_sibling );
+
+        }() ),
+        "getSiblingFrom returns the entry's sibling object"
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var entry;
+
+            entry = {
+                children: [
+                    { sibling: "Reference to sibling of the first child" },
+                    { sibling: "Reference to memory default value of entry sibling" }
+                ]
+            };
+
+            resetSiblingsFor( entry );
+
+            return ( entry.children[ entry.children.length - 1 ].sibling === memory[ "default entry sibling value" ] );
+
+        }() ),
+        "resetSiblingsFor sets the last child of the provided entry to the default sibling value in memory"
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var entry;
+
+            entry = {
+                children: [
+                    { sibling: "Reference to sibling of the first child" },
+                    { sibling: "Reference to memory default value of entry sibling" }
+                ]
+            };
+
+            resetSiblingsFor( entry );
+
+            return ( entry.children[ 0 ].sibling === entry.children[ 1 ] );
+
+        }() ),
+        "resetSiblingsFor sets the second child as the sibling of the first child."
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var comparison_return_value,
+                entry_primus,
+                entry_secundus;
+
+            entry_primus = {
+                uses: 2
+            };
+
+            entry_secundus = {
+                uses: 3
+            };
+
+            comparison_return_value = compareEntryUsage( entry_primus, entry_secundus );
+
+            return ( comparison_return_value === -1 );
+
+        }() ),
+        'CompareEntryUsage returns minus 1 with first_entry.uses 2 and second_entry.uses 3.'
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var comparison_return_value,
+                entry_primus,
+                entry_secundus;
+
+            entry_primus = {
+                uses: 3
+            };
+
+            entry_secundus = {
+                uses: 2
+            };
+
+            comparison_return_value = compareEntryUsage( entry_primus, entry_secundus );
+
+            return ( comparison_return_value === 1 );
+
+        }() ),
+        'CompareEntryUsage returns positive 1 with first_entry.uses 3 and second_entry.uses 2.'
+    );
+
+    assert(
+        ( function () {
+
+            "use strict";
+
+            var comparison_return_value,
+                entry_primus,
+                entry_secundus;
+
+            entry_primus = {
+                uses: 2
+            };
+
+            entry_secundus = {
+                uses: 2
+            };
+
+            comparison_return_value = compareEntryUsage( entry_primus, entry_secundus );
+
+            return ( comparison_return_value === 0 );
+
+        }() ),
+        'CompareEntryUsage returns exactly 0 with first_entry.uses 2 and second_entry.uses 2.'
+    );
+
+}
+
+// --------
+
+// ////////////////////////////////////////////////////////////////
+//
+// Initialisations
+//
+// ////////////////////////////////////////////////////////////////
+
+doTests();
+
+// part;
+
+// reference = test( part );
+
+// if ( reference.value > threshold ) {
+
+//     use( part, reference );
+
+// }
+
+// ////////////////////////////////////////////////////////////////
+//
+// Executions
+//
+// ////////////////////////////////////////////////////////////////
+
+
+</script></body></html>

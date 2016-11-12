@@ -1,0 +1,259 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r8
+
+</title></head><body><script>
+
+"use strict";
+
+var mem,
+
+    prt = ( function createPrt() {
+
+        function proto_prt() {
+
+            console.log.apply( console, arguments );
+
+        }
+
+        return proto_prt;
+
+    }() ),
+
+    assert = ( function createAssert() {
+
+        var num_asserts = 1,
+            assert_args = [
+                "Assert [",
+                num_asserts,
+                "] - ",
+                ""
+            ];
+
+        function proto_assert() {
+
+            assert_args[ 1 ] = num_asserts;
+
+            if ( typeof arguments[ 1 ] !== "undefined" ) {
+
+                assert_args[ 3 ] = arguments[ 1 ];
+
+            } else {
+
+                assert_args[ 3 ] = "No assert message";
+
+            }
+
+            prt.apply( null, assert_args );
+
+            console.assert.apply( console, arguments );
+
+            num_asserts += 1;
+
+        }
+
+        return proto_assert;
+
+    }() );
+
+// --------------------------------------------------------------------------------------------------------------------------------
+// Using direct function to get stuff done...
+// --------------------------------------------------------------------------------------------------------------------------------
+
+function set( path, value ) {
+
+    "use strict";
+
+    mem[ path ] = value;
+
+}
+
+// create a function
+function add( base_path, suplement_path, store_path ) {
+
+    "use strict";
+
+    set( store_path, mem[ base_path ] + mem[ suplement_path ] );
+
+}
+
+mem = {};
+
+set( "1", 1 );
+set( "2", 2 );
+set( "3", 3 );
+set( "4", 4 );
+set( "5", 5 );
+
+// call it
+add( "2", "3", "return value");
+
+// (?) See it work
+prt( mem["return value"] );
+
+// --------------------------------------------------------------------------------------------------------------------------------
+// Not using the above direct functions:
+// --------------------------------------------------------------------------------------------------------------------------------
+
+mem = {};
+
+mem.define = function( key, value ) {
+
+    Object.defineProperty(
+        mem,
+        key,
+        {
+            get: value,
+            enumerable: true,
+            configurable: false
+        }
+    );
+
+}
+
+mem.let = function( key, value ) {
+
+    Object.defineProperty(
+        mem,
+        key,
+        {
+            get: value,
+            enumerable: true,
+            configurable: true
+        }
+    );
+
+}
+
+mem["define"](
+    "fail",
+    function() {
+
+        assert( false, "DEFEAT" );
+
+    }
+);
+
+mem["define"](
+    "set",
+    function() {
+
+        prt("set was called");
+
+        mem["expectation"] = "segment is address descriptor";
+
+        prt("We now have the expectation that the next info bit is an address descriptor!");
+
+    }
+);
+
+mem["define"](
+    "address descriptors",
+    function () {
+
+        return {
+            "path": true
+        };
+
+    }
+);
+
+mem["define"](
+    "segment is address descriptor",
+    function() {
+
+        if ( ! ( mem["address descriptors"][ mem["current segment"] ] ) ) {
+
+            mem["fail"];
+
+        }
+
+    }
+);
+
+mem["define"](
+    "path",
+    function() {
+
+        prt("we've found an address descriptor called: path");
+
+    }
+);
+
+mem["define"](
+    "null",
+    function() {
+
+        return null;
+
+    }
+);
+
+mem["let"](
+    "expectation",
+    function() {
+
+        if ( mem["current segment"] !== mem["null"] ) {
+
+            mem["fail"];
+
+        }
+
+    }
+);
+
+mem["let"](
+    "current segment",
+    function() {
+
+        return mem["null"];
+
+    }
+);
+
+function scrat( instruction ) {
+
+    "use strict";
+
+    var params,
+        i,
+        n;
+
+    params = instruction.split("|");    
+
+    i = 0;
+    n = params.length;
+
+    for ( i; i < n; i += 1 ) {
+
+        mem[ mem["expectation"] ];
+        
+        mem["set"];
+        
+        mem["path"];
+        mem["current segment"];
+
+        mem["segment"];
+        mem[ params[ i ] ];
+        
+        mem[ mem["current segment"] ];
+
+    }
+
+}
+debugger;
+scrat( "set" );
+scrat( "set|path|argument position 1|integer|1" );
+scrat( "set|path|argument position 2|integer|3" );
+
+/* 
+Set is an actor that requests 4 more info bits:
+    1) a descriptor of an address, in this case "path";
+    2) the value of the address to set;
+    3) the descriptor of the value to set at the given address;
+    4) the value that is being set at the given address.
+
+Where each segment is delimited by the PIPE ("|") character for now.
+*/
+
+</script></body></html>

@@ -1,0 +1,105 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r9
+
+</title></head><body><script>
+
+    var prt,
+
+        mem,
+        res,
+        arg1,
+        
+        str_start,
+        str_stop;
+
+    prt = ( function createPrt() {
+
+        function proto_prt() {
+
+            console.log.apply( console, arguments );
+
+        }
+
+        return proto_prt;
+
+    }() );
+
+    function set( address, value ) {
+
+        mem[ address ] = value;
+
+    }
+
+    function get( address ) {
+
+        set( "return", mem[ address ] );
+
+    }
+
+    function add() {
+
+        var left,
+            right,
+            result;
+
+        get( "arg2" );
+
+        if ( isUndefined( mem[ "return" ] ) ) {
+
+            throw "add: '" + mem[ "return" ] + " is undefined'";
+
+        }
+
+        get( "arg1" );
+
+        if ( isUndefined( mem[ "return" ] ) ) {
+
+            throw "add: '" + mem[ "return" ] + " is undefined'";
+
+        }
+
+        result = left + right;
+
+        set( "res", result );
+
+    }
+
+    function isUndefined( value ) {
+
+        return ( value === undefined );
+
+    }
+
+    function resolveToString() {
+
+        "use strict";
+
+        // We load up our string delimiter and concat the expected "argument 1" to it
+        set( "arg2", get( "arg1" ) );
+        set( "arg1", get( "str_start" ) );
+
+        add();
+
+        set( "arg2", get( "str_stop" ) );
+        set( "arg1", get( "res" ) );
+
+        add();
+
+    }
+
+// booting up:
+
+    mem = {};
+
+    set( "str_start", 0 );
+    set( "str_stop", 1 );
+
+// Executing:
+debugger;
+    set( "arg1", "hello" );
+    resolveToString();
+
+    console.assert( get( "res" ) === "0hello1", 'resolveToString sets mem["res"] to "0hello1" when arg1 equals "hello"' );
+
+</script></body></html>

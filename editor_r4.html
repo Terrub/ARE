@@ -1,0 +1,97 @@
+<!doctype html><html><head><meta charset="utf-8" /><title>
+
+    At Runtime Editor r4
+
+</title></head><body><script>
+
+    "use strict";
+
+    var base;
+
+    // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+    base = {
+        "local storage": localStorage,
+        "editor identification": "ARE_r4",
+        "boot up sequence": function () {
+
+            base[ "construct" ]( "input area", "textarea" );
+
+            base[ "construct" ]( "debug mock storage", "pre" );
+
+            base[ "load local storage" ]();
+
+            base[ "test active code" ]();
+
+            base[ "save active code" ]();
+
+            document.addEventListener( "keydown", base[ "handle key down" ] );
+
+        },
+        "construct": function ( p_component_identification, p_component_tag_name ) {
+
+            base[ p_component_identification ] = document.createElement( p_component_tag_name );
+
+            document.body.appendChild( base[ p_component_identification ] );
+
+        },
+        "load local storage": function () {
+
+            if ( base[ "local storage" ][ base[ "editor identification" ] ] !== undefined ) {
+
+                base[ "input area" ].value = base[ "local storage" ][ base[ "editor identification" ] ];
+
+                base[ "initialised" ] = true;
+
+            }
+
+            if ( ! base[ "initialised" ] ) {
+
+                base[ "input area" ].value = base[ "code spine" ];
+
+            }
+
+        },
+        "test active code": function () {
+
+            //#TODO: This requires tests.
+
+        },
+        "save active code": function () {
+
+            base[ "proposed code" ] = base[ "input area" ].value;
+
+            // Temp mock to keep an eye on local storage
+
+            // base[ "debug mock storage" ].innerHTML = base[ "proposed code" ];
+
+            base[ "local storage" ][ base[ "editor identification" ] ] = base[ "proposed code" ];
+
+        },
+        "execute proposed code": function () {
+
+            // Parse through the proposed code.
+
+            eval( base[ "proposed code" ] );
+
+        },
+        "handle key down": function ( keyboard_event_key_down ) {
+
+            if ( keyboard_event_key_down.keyIdentifier === "U+0053" && keyboard_event_key_down.ctrlKey ) {
+
+                keyboard_event_key_down.preventDefault();
+
+                base[ "test active code" ]();
+
+                base[ "save active code" ]();
+
+                base[ "execute proposed code" ]();
+
+            }
+
+        }
+    };
+debugger;
+    base[ "boot up sequence" ]();
+
+</script></body></html>
